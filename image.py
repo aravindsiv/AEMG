@@ -39,14 +39,23 @@ model = torch.load("pendulum_ae.pt")
 def g(X):
     return TM.pendulum_lqr(X)
 
-x = torch.tensor([0.1,0.1],dtype=torch.float32)
-x = model.decoder(x)
-x = x.detach().numpy()
-x = x * (tf_bounds[:,1] - tf_bounds[:,0]) + tf_bounds[:,0]
-x = env.inverse_transform(x)
-x = g(X)
-x = env.transform(x)
-x = (x - tf_bounds[:,0]) / (tf_bounds[:,1] - tf_bounds[:,0])
-x = torch.from_numpy(x).float()
-encoding = model.encoder(x).detach().numpy()
-print(encoding)
+def f(X):
+    # Now x is in [-1,1]^2
+    x = torch.tensor([0.1,0.1],dtype=torch.float32)
+    # This brings x to [0,1]^4
+    x = model.decoder(x)
+    x = x.detach().numpy()
+    # This brings x to R^4
+    x = x * (tf_bounds[:,1] - tf_bounds[:,0]) + tf_bounds[:,0]
+    # This brings x to [-pi,pi] x [-2pi,2pi]
+    x = env.inverse_transform(x)
+    # This computes the image (using TimeMap)
+    x = g(X)
+    # Bring x to R^4
+    x = env.transform(x)
+    # Bring x to [0,1]^4
+    x = (x - tf_bounds[:,0]) / (tf_bounds[:,1] - tf_bounds[:,0])
+    x = torch.from_numpy(x).float()
+    # Bring x to [-1,1]^2
+    x = model.encoder(x).detach().numpy()
+    return x
