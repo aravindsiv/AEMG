@@ -36,17 +36,17 @@ class AutoEncoder(nn.Module):
 
 model = torch.load("pendulum_ae.pt")
 
+def g(X):
+    return TM.pendulum_lqr(X)
+
 x = torch.tensor([0.1,0.1],dtype=torch.float32)
 x = model.decoder(x)
 x = x.detach().numpy()
 x = x * (tf_bounds[:,1] - tf_bounds[:,0]) + tf_bounds[:,0]
 x = env.inverse_transform(x)
-
-for i in range(100):
-    # This is the g function
-    x = env.step(x)
-
+x = g(X)
+x = env.transform(x)
 x = (x - tf_bounds[:,0]) / (tf_bounds[:,1] - tf_bounds[:,0])
 x = torch.from_numpy(x).float()
 encoding = model.encoder(x).detach().numpy()
-print(x)
+print(encoding)
