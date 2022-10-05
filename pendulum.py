@@ -41,20 +41,22 @@ class PendulumNoCtrl:
 
     def transform(self,s):
         # Transform from theta, thetadot to x,y,xdot,ydot
-        x = self.l * np.sin(s[0])
-        y = -self.l * np.cos(s[0])
-        xdot = self.l * np.cos(s[0]) * s[1]
-        ydot = self.l * np.sin(s[0]) * s[1]
+        # phi = theta - pi/2
+        # coordinates are (x,y) = (lcos(phi), -lsin(phi))
+        x = -self.l * np.sin(s[0])
+        y = self.l * np.cos(s[0])
+        xdot = -self.l * np.cos(s[0]) * s[1]
+        ydot = -self.l * np.sin(s[0]) * s[1]
         return np.array([x,y,xdot,ydot])
     
     def inverse_transform(self,s):
         # Transform from x,y,xdot,ydot to theta, thetadot
         # theta = np.arcsin(s[0] / self.l)
         theta = np.arctan2(-s[0],s[1])
-        thetadot = s[2] / self.l * np.cos(theta)
+        thetadot = -s[2] / s[1]
         return np.array([theta, thetadot])
 
-    def valid_state(self,x):
+    def valid_state(self,x,eps=0.25):
         if np.abs(x[0]) > self.l or np.abs(x[1]) > self.l: return False
         if np.abs(x[2]) > self.l * 2 * np.pi or np.abs(x[3]) > self.l * 2 * np.pi: return False
         if np.abs(x[0]*x[0] + x[1]*x[1] - self.l*self.l) > eps: return False
