@@ -43,17 +43,17 @@ class PendulumNoCtrl:
         # Transform from theta, thetadot to x,y,xdot,ydot
         # phi = theta - pi/2
         # coordinates are (x,y) = (lcos(phi), -lsin(phi))
-        x = -self.l * np.sin(s[0])
+        x = self.l * np.sin(s[0])
         y = self.l * np.cos(s[0])
-        xdot = -self.l * np.cos(s[0]) * s[1]
+        xdot = self.l * np.cos(s[0]) * s[1]
         ydot = -self.l * np.sin(s[0]) * s[1]
         return np.array([x,y,xdot,ydot])
     
     def inverse_transform(self,s):
         # Transform from x,y,xdot,ydot to theta, thetadot
         # theta = np.arcsin(s[0] / self.l)
-        theta = np.arctan2(-s[0],s[1])
-        thetadot = -s[2] / s[1]
+        theta = np.arctan2(s[0],s[1])
+        thetadot = s[2] / s[1]
         return np.array([theta, thetadot])
 
     def valid_state(self,x,eps=0.25):
