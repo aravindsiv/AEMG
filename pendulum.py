@@ -55,7 +55,8 @@ class PendulumNoCtrl:
         theta = np.arctan2(s[0],s[1])
         if s[1] != 0: thetadot = s[2] / s[1]
         else: thetadot = -s[3] / s[0]
-        return np.array([theta, thetadot])
+        s = self._enforce([theta,thetadot])
+        return s
 
     def valid_state(self,x,eps=0.25):
         if np.abs(x[0]) > self.l or np.abs(x[1]) > self.l: return False
@@ -63,6 +64,9 @@ class PendulumNoCtrl:
         if np.abs(x[0]*x[0] + x[1]*x[1] - self.l*self.l) > eps: return False
         if np.abs(x[0]*x[2] + x[1]*x[3]) > eps: return False
         return True
+    
+    def get_bounds(self):
+        return self.state_bounds
     
     def get_transformed_state_bounds(self):
         return np.array([[-self.l, self.l], [-self.l, self.l], [-2*self.l*self.g, 2*self.l*self.g], [-2*self.l*self.g, 2*self.l*self.g]])

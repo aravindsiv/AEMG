@@ -128,12 +128,10 @@ for epoch in tqdm(range(0,num_epochs)):
     epoch_val_loss = epoch_val_loss / len(valloader)
     val_losses.append(epoch_val_loss)
 
-torch.save(model,"pendulum_ae.pt")
-
 plt.figure(figsize=(8,8))
 plt.grid()
 plt.plot(train_losses,label='Train Loss')
 plt.plot(val_losses,label='Val Loss')
 plt.legend(loc='best')
 plt.ylim(0,0.1)
-plt.savefig("loss.png")
+plt.show()
