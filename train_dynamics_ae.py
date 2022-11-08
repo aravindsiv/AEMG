@@ -8,6 +8,19 @@ import sys
 from pendulum import PendulumNoCtrl
 
 from torch.utils.data import DataLoader
+import wandb
+from models import *
+import os
+from config import *
+
+# ROOT_PATH = 'root_lqr'
+MODEL_PATH = f'{ROOT_PATH}/models'
+if not os.path.exists(MODEL_PATH):
+    os.makedirs(MODEL_PATH)\
+
+RESULTS_PATH = f'{ROOT_PATH}/results'
+if not os.path.exists(RESULTS_PATH):
+    os.makedirs(RESULTS_PATH)
 
 # Set some seeds
 np.random.seed(0)
@@ -25,67 +38,15 @@ class DynamicsDataset(torch.utils.data.Dataset):
     def __getitem__(self,i):
         return self.Xt[i], self.Xnext[i]
 
-class Encoder(nn.Module):
-    def __init__(self,input_shape,lower_shape):
-        super(Encoder, self).__init__()
-        self.encoder = nn.Sequential(
-            nn.Linear(input_shape, 16),
-            nn.ReLU(True), 
-            nn.Linear(16, 16), 
-            nn.ReLU(True), 
-            nn.Linear(16, lower_shape),
-            nn.Tanh()
-        )
-
-    def forward(self, x):
-        x = self.encoder(x)
-        return x
-
-class Decoder(nn.Module):
-    def __init__(self,lower_shape,input_shape):
-        super(Decoder, self).__init__()
-        self.decoder = nn.Sequential(
-            nn.Linear(lower_shape, 16),
-            nn.ReLU(True),
-            nn.Linear(16, 16),
-            nn.ReLU(True), 
-            nn.Linear(16, input_shape),
-            nn.Sigmoid() 
-            )
-
-    def forward(self, x):
-        x = self.decoder(x)
-        return x
-
-class LatentDynamics(nn.Module):
-    # Takes as input an encoding and returns a latent dynamics
-    # vector which is just another encoding
-    def __init__(self,lower_shape):
-        super(LatentDynamics, self).__init__()
-        self.dynamics = nn.Sequential(
-            nn.Linear(lower_shape, 16),
-            nn.ReLU(True),
-            nn.Linear(16, 16),
-            nn.ReLU(True), 
-            nn.Linear(16, lower_shape), 
-            nn.Tanh()
-            )
-    
-    def forward(self, x):
-        x = self.dynamics(x)
-        return x
-
 env = PendulumNoCtrl()
 bounds = env.get_transformed_state_bounds()
 
-mode = "lqr"
-
 if mode == "lqr":
-    raw_data = np.loadtxt("pendulum_lqr.txt",delimiter=",")
+    raw_data = np.loadtxt(data_file, delimiter=",")
     print(raw_data.shape)
 
-if mode == "none":
-    raw_data = np.loadtxt("pendulum_noctrl.txt",delimiter=",")
+if mode == "noctrl":
+    raw_data = np.loadtxt(data_file, delimiter=",")
     print(raw_data.shape)
 
 raw_dat = np.array(raw_data)
@@ -93,12 +54,6 @@ print(raw_dat.shape)
 
 dat = np.zeros((raw_dat.shape[0],8))
 dataset_size = raw_dat.shape[0]
-
-high_dims = 4
-low_dims = 2
-
-batch_size = 1024
-epochs = int(1e2)
 
 x = env.sample_state()
 print(x)
@@ -125,82 +80,154 @@ encoder = Encoder(high_dims,low_dims)
 dynamics = LatentDynamics(low_dims)
 decoder = Decoder(low_dims,high_dims)
 
+encoder = encoder.to('cuda:0')
+dynamics = dynamics.to('cuda:0')
+decoder = decoder.to('cuda:0')
+
 criterion = nn.MSELoss(reduction='mean')
 optimizer = torch.optim.Adam(set(list(encoder.parameters()) + list(dynamics.parameters()) + 
 list(decoder.parameters())), lr=1e-3)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=0.001, patience=5, verbose=True)
 
 train_losses = []
 val_losses = []
 
-for epoch in tqdm(range(epochs)):
-    current_train_loss = 0.0
-    epoch_train_loss = 0.0
+# latent_coeff = 1.0
 
-    encoder.train()
-    dynamics.train()
-    decoder.train()
-    for i, data in enumerate(train_loader, 0):
-        x_t, x_tau  = data
+# train = True
+# warmup = 20
 
-        optimizer.zero_grad()
+if train:
+    wandb.init('dynamics')
 
-        z_t = encoder(x_t)
-        x_t_pred = decoder(z_t)
-        z_tau_pred = dynamics(z_t)
-        x_tau_pred = decoder(z_tau_pred)
-        z_tau = encoder(x_tau)
+    train_losses = {'loss_ae1': [], "loss_ae2": [], "loss_dyn": [], 'loss_total': []}
+    val_losses = {'loss_ae1': [], "loss_ae2": [], "loss_dyn": [], 'loss_total': []}
+    for epoch in tqdm(range(epochs)):
+        current_train_loss = 0.0
+        epoch_train_loss = 0.0
+        latent_coeff = 1.0 # epoch/epochs
 
-        loss_ae1 = criterion(x_t_pred, x_t)
-        loss_ae2 = criterion(x_tau_pred, x_tau)
-        loss_dyn = criterion(z_tau_pred, z_tau)
+        loss_ae1_train = 0
+        loss_ae2_train = 0
+        loss_dyn_train = 0
 
-        loss = loss_ae1 + loss_ae2 + loss_dyn
-        loss.backward()
+        encoder.train()
+        dynamics.train()
+        decoder.train()
+        ctr = 0
+        for i, data in enumerate(train_loader, 0):
+            optimizer.zero_grad()
+            x_t, x_tau  = data
+            x_t = x_t.to('cuda:0')
+            x_tau = x_tau.to('cuda:0')
+            # print(torch.cat([x_t, x_tau], dim=-1).shape)
+            z_t = encoder(x_t)
+            x_t_pred = decoder(z_t)
+            z_tau_pred = dynamics(z_t)
+            x_tau_pred = decoder(z_tau_pred)
+            z_tau = encoder(x_tau)
 
-        optimizer.step()
+            loss_ae1 = criterion(x_t_pred, x_t)
+            loss_ae2 = criterion(x_tau_pred, x_tau)
+            loss_dyn = criterion(z_tau_pred, z_tau.detach())
 
-        current_train_loss += loss.item()
-        epoch_train_loss += loss.item()
+            if epoch >= warmup:
+                loss = loss_ae1 + loss_ae2 + loss_dyn
+            else:
+                loss = loss_ae1 + loss_ae2
+            loss.backward()
+            optimizer.step()
+
+            current_train_loss += loss.item()
+            epoch_train_loss += loss.item()
+
+            loss_ae1_train += loss_ae1.item()
+            loss_ae2_train += loss_ae2.item()
+            loss_dyn_train += loss_dyn.item() if epoch>=warmup else 0.0
+            ctr += 1
+            
+            if (i+1) % 100 == 0:
+                print("Loss after mini-batch ",i+1,": ", current_train_loss)
+                current_train_loss = 0.0
+        wandb.log({
+            "train/loss_ae1": loss_ae1_train/ctr,
+            "train/loss_ae2": loss_ae2_train/ctr,
+            "train/loss_dyn": loss_dyn_train/ctr,
+            "train/total_loss": epoch_train_loss/ctr,
+            # 'learning_rate': scheduler.get_lr()
+        })
+
+        train_losses['loss_ae1'].append(loss_ae1_train/ctr)
+        train_losses['loss_ae2'].append(loss_ae2_train/ctr)
+        train_losses['loss_dyn'].append(loss_dyn_train/ctr)
+        train_losses['loss_total'].append(epoch_train_loss/ctr)
         
-        if (i+1) % 100 == 0:
-            print("Loss after mini-batch ",i+1,": ", current_train_loss)
-            current_train_loss = 0.0
-    
-    epoch_train_loss = epoch_train_loss / len(train_loader)
-    train_losses.append(epoch_train_loss)
+        # epoch_train_loss = epoch_train_loss / len(train_loader)
+        # train_losses.append(epoch_train_loss)
 
-    epoch_val_loss = 0.0
-    encoder.eval()
-    dynamics.eval()
-    decoder.eval()
-    for i, data in enumerate(val_loader, 0):
-        x_t, x_tau  = data
+        with torch.no_grad():
+            epoch_val_loss = 0.0
+            loss_ae1_val = 0.
+            loss_ae2_val = 0.
+            loss_dyn_val = 0.
+            encoder.eval()
+            dynamics.eval()
+            decoder.eval()
+            ctr = 0
+            for i, data in enumerate(val_loader, 0):
+                x_t, x_tau  = data
+                x_t = x_t.to('cuda:0')
+                x_tau = x_tau.to('cuda:0')
 
-        z_t = encoder(x_t)
-        x_t_pred = decoder(z_t)
-        z_tau_pred = dynamics(z_t)
-        x_tau_pred = decoder(z_tau_pred)
-        z_tau = encoder(x_tau)
+                z_t = encoder(x_t)
+                x_t_pred = decoder(z_t)
+                z_tau_pred = dynamics(z_t)
+                x_tau_pred = decoder(z_tau_pred)
+                z_tau = encoder(x_tau)
+                
+                loss_ae1 = criterion(x_t_pred, x_t)
+                loss_ae2 = criterion(x_tau_pred, x_tau)
+                loss_dyn = criterion(z_tau_pred, z_tau)
 
-        loss_ae1 = criterion(x_t_pred, x_t)
-        loss_ae2 = criterion(x_tau_pred, x_tau)
-        loss_dyn = criterion(z_tau_pred, z_tau)
 
-        epoch_val_loss += loss_ae1.item() + loss_ae2.item() + loss_dyn.item()
-    
-    epoch_val_loss = epoch_val_loss / len(val_loader)
-    val_losses.append(epoch_val_loss)
+                loss_ae1_val += loss_ae1.item()
+                loss_ae2_val += loss_ae2.item()
+                loss_dyn_val += loss_dyn.item() if epoch>=warmup else 0.0
 
-plt.figure(figsize=(8,8))
-plt.grid()
-plt.plot(train_losses,label='Train Loss')
-plt.plot(val_losses,label='Val Loss')
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.title("Training and Validation Losses")
-plt.legend(loc='best')
-plt.ylim(0,0.1)
-plt.show()
+                ctr += 1
+
+                if epoch >= warmup:
+                    epoch_val_loss += loss_ae1.item() + loss_ae2.item() + loss_dyn.item()
+                else:
+                    epoch_val_loss += loss_ae1.item() + loss_ae2.item()
+
+            wandb.log({
+                "val/loss_ae1": loss_ae1_val/ctr,
+                "val/loss_ae2": loss_ae2_val/ctr,
+                "val/loss_dyn": loss_dyn_val/ctr,
+                "val/total_loss": epoch_val_loss/ctr,
+            })
+            val_losses['loss_ae1'].append(loss_ae1_val/ctr)
+            val_losses['loss_ae2'].append(loss_ae2_val/ctr)
+            val_losses['loss_dyn'].append(loss_dyn_val/ctr)
+            val_losses['loss_total'].append(epoch_val_loss/ctr)
+
+            if epoch >= warmup:
+                scheduler.step(epoch_val_loss/ctr)
+
+        import pickle
+        with open(f'{RESULTS_PATH}/losses{"_warmup" if warmup > 0 else ""}_{mode}.pkl', 'wb') as f:
+            pickle.dump({'train': train_losses, 'val': val_losses}, f)
+        
+        print('train loss:', epoch_train_loss, 'test loss:', epoch_val_loss)
+
+    torch.save(encoder, f"{MODEL_PATH}/encoder_{mode}_0.1_20steps_1M{'_warmup' if warmup > 0 else ''}_64.pt")
+    torch.save(decoder, f"{MODEL_PATH}/decoder_{mode}_0.1_20steps_1M{'_warmup' if warmup > 0 else ''}_64.pt")
+    torch.save(dynamics, f"{MODEL_PATH}/dynamics_{mode}_0.1_20steps_1M{'_warmup' if warmup > 0 else ''}_64.pt")
+
+encoder = torch.load(f"{MODEL_PATH}/encoder_{mode}_0.1_20steps_1M{'_warmup' if warmup > 0 else ''}_64.pt").to("cpu")
+decoder = torch.load(f"{MODEL_PATH}/decoder_{mode}_0.1_20steps_1M{'_warmup' if warmup > 0 else ''}_64.pt").to("cpu")
+dynamics = torch.load(f"{MODEL_PATH}/dynamics_{mode}_0.1_20steps_1M{'_warmup' if warmup > 0 else ''}_64.pt").to("cpu")
 
 with torch.no_grad():
     encoder.eval()
@@ -228,7 +255,8 @@ with torch.no_grad():
     plt.xlabel("theta")
     plt.ylabel("thetadot")
     plt.title("State Space")
-    plt.show()
+    plt.savefig(f'{RESULTS_PATH}/L1_{mode}.png')
+    # plt.show()
 
     plt.figure(figsize=(8,8))
     plt.scatter(raw_dat_te[:num_points,2],raw_dat_te[:num_points,3],c='r',label='Actual')
@@ -248,7 +276,8 @@ with torch.no_grad():
     plt.xlabel("theta")
     plt.ylabel("thetadot")
     plt.title("State Space")
-    plt.show()
+    plt.savefig(f'{RESULTS_PATH}/L2_{mode}.png')
+    # plt.show()
 
     plt.figure(figsize=(8,8))
     z_t = encoder(torch.from_numpy(dat_te[:num_points,:high_dims]).float())
@@ -264,7 +293,27 @@ with torch.no_grad():
     plt.xlabel("z1")
     plt.ylabel("z2")
     plt.title("Latent Space")
-    plt.show()
+    plt.savefig(f'{RESULTS_PATH}/L3_{mode}.png')
+    # plt.show()
+
+    num_points = int(1e3)
+
+    plt.figure(figsize=(8,8))
+    z_t = encoder(torch.from_numpy(dat_te[:num_points,:high_dims]).float())
+    z_tau = encoder(torch.from_numpy(dat_te[:num_points,high_dims:]).float())
+    z_tau = z_tau.detach().numpy()
+    plt.scatter(z_t[:,0],z_t[:,1],c='r',label='z_t')
+    z_tau_pred = dynamics(z_t).float()
+    z_tau_pred = z_tau_pred.detach().numpy()
+    plt.scatter(z_tau_pred[:,0],z_tau_pred[:,1],c='b',label='z_tau')
+    for i in range(num_points):
+        plt.plot([z_t[i,0],z_tau_pred[i,0]],[z_t[i,1],z_tau_pred[i,1]],c='k')
+    plt.legend(loc='best')
+    plt.xlabel("z1")
+    plt.ylabel("z2")
+    plt.title("Latent Space Dyn")
+    plt.savefig(f'{RESULTS_PATH}/latent_dyn_{mode}.png')
+    # plt.show()
 
     plt.figure(figsize=(8,8))
     z_t = encoder(torch.from_numpy(dat_te[:num_points,high_dims:]).float())
@@ -281,46 +330,61 @@ with torch.no_grad():
     pred_plot = np.zeros((x_tau.shape[0],2))
     for i in range(x_tau.shape[0]):
         pred_plot[i] = env.inverse_transform(x_tau[i,:])
-    plt.scatter(pred_plot[:,0],pred_plot[:,1],c='r',label='Actual')
-    plt.scatter(pred_plot_pred[:,0],pred_plot_pred[:,1],c='b',label='Predicted')
+    plt.scatter(pred_plot[:,0],pred_plot[:,1],c='r',label='z_t')
+    plt.scatter(pred_plot_pred[:,0],pred_plot_pred[:,1],c='b',label='z_tau')
     for i in range(num_points):
         plt.plot([pred_plot[i,0],pred_plot_pred[i,0]],[pred_plot[i,1],pred_plot_pred[i,1]],c='k')
     plt.legend(loc='best')
     plt.xlim(-np.pi,np.pi)
     plt.ylim(-2*np.pi,2*np.pi)
+
     plt.xlabel("theta")
     plt.ylabel("thetadot")
     plt.title("State Space")
-    plt.show()
-    '''
+    # plt.show()
 
-    plt.figure(figsize=(8,8))
-    # plt.xlim(-1,1)
-    # plt.ylim(-1,1)
-    z_t = encoder(torch.from_numpy(dat_te[:,:high_dims]).float())
-    z_t = z_t.detach().numpy()
-    plt.scatter(z_t[:,0],z_t[:,1],c='r',label='Initial')
-    z_tau = encoder(torch.from_numpy(dat_te[:,high_dims:]).float())
-    z_tau = z_tau.detach().numpy()
-    plt.scatter(z_tau[:,0],z_tau[:,1],c='b',label='Final')
-    plt.xlabel("z1")
-    plt.ylabel("z2")
-    plt.title("Latent space - z_t and z_tau (true)")
-    plt.legend(loc='best')
-    plt.show()
+    fig, axes = plt.subplots(1, 2,  figsize=(16,8), sharey=True)
+    ax = axes.flatten()
 
-    plt.figure(figsize=(8,8))
-    # plt.xlim(-1,1)
-    # plt.ylim(-1,1)
-    z_t = encoder(torch.from_numpy(dat_te[:,:high_dims]).float())
-    z_t = z_t.detach().numpy()
-    plt.scatter(z_t[:,0],z_t[:,1],c='r',label='Initial')
-    z_tau_pred = dynamics(torch.from_numpy(z_t).float())
-    z_tau_pred = z_tau_pred.detach().numpy()
-    plt.scatter(z_tau_pred[:,0],z_tau_pred[:,1],c='b',label='Final')
-    plt.xlabel("z1")
-    plt.ylabel("z2")
-    plt.title("Latent space - z_t and z_tau (predicted)")
-    plt.legend(loc='best')
-    plt.show()
-    '''
+    x = torch.from_numpy(dat_te[:num_points,:high_dims]).float()
+    x = x*(bounds[:,1] - bounds[:,0]) + bounds[:,0]
+    x_tau = torch.from_numpy(dat_te[:num_points,high_dims:]).float()
+    x_tau = x_tau*(bounds[:,1] - bounds[:,0]) + bounds[:,0]
+    pred_plot_pred = np.zeros((x_tau.shape[0],2))
+    for i in range(x_tau.shape[0]):
+        pred_plot_pred[i] = env.inverse_transform(x_tau[i,:])
+    pred_plot = np.zeros((x.shape[0],2))
+    for i in range(x.shape[0]):
+        pred_plot[i] = env.inverse_transform(x[i,:])
+    ax[0].scatter(pred_plot[:,0],pred_plot[:,1],c='r',label='x_t')
+    ax[0].scatter(pred_plot_pred[:,0],pred_plot_pred[:,1],c='b',label='x_tau')
+    for i in range(num_points):
+        ax[0].plot([pred_plot[i,0],pred_plot_pred[i,0]],[pred_plot[i,1],pred_plot_pred[i,1]],c='k')
+
+    ax[0].set_xlim(-np.pi,np.pi)
+    ax[0].set_ylim(-2*np.pi,2*np.pi)
+    ax[0].legend(loc='best')
+
+    z_t = encoder(torch.from_numpy(dat_te[:num_points,:high_dims]).float())
+    z_tau = encoder(torch.from_numpy(dat_te[:num_points,high_dims:]).float())
+    z_tau_pred = dynamics(z_t).float()
+
+    x_tau = decoder(z_t).numpy()
+    x_tau = x_tau*(bounds[:,1] - bounds[:,0]) + bounds[:,0]
+    x_tau_pred = decoder(z_tau_pred).numpy()
+    x_tau_pred = x_tau_pred*(bounds[:,1] - bounds[:,0]) + bounds[:,0]
+    pred_plot_pred = np.zeros((x_tau_pred.shape[0],2))
+    for i in range(x_tau_pred.shape[0]):
+        pred_plot_pred[i] = env.inverse_transform(x_tau_pred[i,:])
+    pred_plot = np.zeros((x_tau.shape[0],2))
+    for i in range(x_tau.shape[0]):
+        pred_plot[i] = env.inverse_transform(x_tau[i,:])
+    ax[1].scatter(pred_plot[:,0],pred_plot[:,1],c='r',label='x_t')
+    ax[1].scatter(pred_plot_pred[:,0],pred_plot_pred[:,1],c='b',label='x_tau')
+    for i in range(num_points):
+        ax[1].plot([pred_plot[i,0],pred_plot_pred[i,0]],[pred_plot[i,1],pred_plot_pred[i,1]],c='k')
+
+    ax[1].set_xlim(-np.pi,np.pi)
+    ax[1].set_ylim(-2*np.pi,2*np.pi)
+    ax[1].legend(loc='best')
+    plt.savefig(f'{RESULTS_PATH}/pred_dyn_{mode}.png')
