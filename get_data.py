@@ -1,7 +1,7 @@
 import sys
 import os
 from tqdm import tqdm
-sys.path.append(os.environ["DIRTMP_PATH"]+"examples/tripods/")
+sys.path.append(os.environ["DIRTMP_PATH"]+"/examples/tripods/")
 import TimeMap
 import numpy as np 
 np.set_printoptions(suppress=True)
@@ -9,10 +9,11 @@ np.random.seed(101193)
 import matplotlib.pyplot as plt
 
 from pendulum import PendulumNoCtrl
+from config import *
 
 time = 5
-time_step = 0.5
-num_steps = int(time/time_step)
+time_step = 0.1
+num_steps = steps # int(time/time_step)
 
 TM = TimeMap.TimeMap("pendulum_lc", time_step,
                      "examples/tripods/pendulum_lc.yaml")
@@ -35,8 +36,11 @@ for i in tqdm(range(num_points)):
     traj = [env.sample_state()]
     for j in range(num_steps):
         state = list(traj[j])
-        # traj.append(TM.pendulum_lqr(state))
-        traj.append(TM.pendulum_no_ctrl(state))
+        if mode == 'lqr':
+            traj.append(TM.pendulum_lqr(state))
+        else:
+            traj.append(TM.pendulum_no_ctrl(state))
+    
     # Each pair of consecutive states is a data point
     for j in range(num_steps):
         data[i*num_steps + j, :2] = traj[j]
@@ -51,4 +55,5 @@ for i in tqdm(range(num_points)):
 # plt.show()
 
 # Save the data
-np.savetxt("pendulum_data.txt",data,delimiter=",")
+# print(data.shape)
+np.savetxt(f"pendulum_noctrl_0.1_{num_steps}step_1M.txt",data,delimiter=",")
