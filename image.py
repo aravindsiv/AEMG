@@ -15,17 +15,17 @@ class AutoEncoder(nn.Module):
         super(AutoEncoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_shape, 32),
-            nn.ReLU(True), 
-            nn.Linear(32, 16), 
-            nn.ReLU(True), 
+            nn.ReLU(True),
+            nn.Linear(32, 16),
+            nn.ReLU(True),
             nn.Linear(16, lower_shape),
             nn.Tanh())
         self.decoder = nn.Sequential(
             nn.Linear(lower_shape, 16),
             nn.ReLU(True),
             nn.Linear(16, 32),
-            nn.ReLU(True), 
-            nn.Linear(32, input_shape), 
+            nn.ReLU(True),
+            nn.Linear(32, input_shape),
             nn.Sigmoid()
             )
 
@@ -36,10 +36,8 @@ class AutoEncoder(nn.Module):
 
 model = torch.load("pendulum_ae.pt")
 
-def g(X):
-    return TM.pendulum_lqr(X)
 
-def f(X):
+def f(g, X):
     # Now x is in [-1,1]^2
     x = torch.tensor([0.1,0.1],dtype=torch.float32)
     # This brings x to [0,1]^4

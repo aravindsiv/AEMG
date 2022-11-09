@@ -1,6 +1,6 @@
-import numpy as np 
+import numpy as np
 import torch
-from torch import nn 
+from torch import nn
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import sys
@@ -31,10 +31,10 @@ class DynamicsDataset(torch.utils.data.Dataset):
         if not torch.is_tensor(Xt):
             self.Xt = torch.from_numpy(Xt).float()
             self.Xnext = torch.from_numpy(Xnext).float()
-    
+
     def __len__(self):
         return len(self.Xt)
-    
+
     def __getitem__(self,i):
         return self.Xt[i], self.Xnext[i]
 
@@ -80,12 +80,16 @@ encoder = Encoder(high_dims,low_dims)
 dynamics = LatentDynamics(low_dims)
 decoder = Decoder(low_dims,high_dims)
 
-encoder = encoder.to('cuda:0')
-dynamics = dynamics.to('cuda:0')
-decoder = decoder.to('cuda:0')
+# encoder = encoder.to('cuda:0')
+# dynamics = dynamics.to('cuda:0')
+# decoder = decoder.to('cuda:0')
+
+encoder = encoder.to(str("cuda:0") if torch.cuda.is_available() else "cpu")
+dynamics = dynamics.to(str("cuda:0") if torch.cuda.is_available() else "cpu")
+decoder = decoder.to(str("cuda:0") if torch.cuda.is_available() else "cpu")
 
 criterion = nn.MSELoss(reduction='mean')
-optimizer = torch.optim.Adam(set(list(encoder.parameters()) + list(dynamics.parameters()) + 
+optimizer = torch.optim.Adam(set(list(encoder.parameters()) + list(dynamics.parameters()) +
 list(decoder.parameters())), lr=1e-3)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=0.001, patience=5, verbose=True)
 
@@ -118,8 +122,8 @@ if train:
         for i, data in enumerate(train_loader, 0):
             optimizer.zero_grad()
             x_t, x_tau  = data
-            x_t = x_t.to('cuda:0')
-            x_tau = x_tau.to('cuda:0')
+            x_t = x_t.to(str("cuda:0") if torch.cuda.is_available() else "cpu")
+            x_tau = x_tau.to(str("cuda:0") if torch.cuda.is_available() else "cpu")
             # print(torch.cat([x_t, x_tau], dim=-1).shape)
             z_t = encoder(x_t)
             x_t_pred = decoder(z_t)
@@ -145,7 +149,7 @@ if train:
             loss_ae2_train += loss_ae2.item()
             loss_dyn_train += loss_dyn.item() if epoch>=warmup else 0.0
             ctr += 1
-            
+
             if (i+1) % 100 == 0:
                 print("Loss after mini-batch ",i+1,": ", current_train_loss)
                 current_train_loss = 0.0
@@ -161,7 +165,7 @@ if train:
         train_losses['loss_ae2'].append(loss_ae2_train/ctr)
         train_losses['loss_dyn'].append(loss_dyn_train/ctr)
         train_losses['loss_total'].append(epoch_train_loss/ctr)
-        
+
         # epoch_train_loss = epoch_train_loss / len(train_loader)
         # train_losses.append(epoch_train_loss)
 
@@ -176,15 +180,15 @@ if train:
             ctr = 0
             for i, data in enumerate(val_loader, 0):
                 x_t, x_tau  = data
-                x_t = x_t.to('cuda:0')
-                x_tau = x_tau.to('cuda:0')
+                x_t = x_t.to(str("cuda:0") if torch.cuda.is_available() else "cpu")
+                x_tau = x_tau.to(str("cuda:0") if torch.cuda.is_available() else "cpu")
 
                 z_t = encoder(x_t)
                 x_t_pred = decoder(z_t)
                 z_tau_pred = dynamics(z_t)
                 x_tau_pred = decoder(z_tau_pred)
                 z_tau = encoder(x_tau)
-                
+
                 loss_ae1 = criterion(x_t_pred, x_t)
                 loss_ae2 = criterion(x_tau_pred, x_tau)
                 loss_dyn = criterion(z_tau_pred, z_tau)
@@ -218,7 +222,7 @@ if train:
         import pickle
         with open(f'{RESULTS_PATH}/losses{"_warmup" if warmup > 0 else ""}_{mode}.pkl', 'wb') as f:
             pickle.dump({'train': train_losses, 'val': val_losses}, f)
-        
+
         print('train loss:', epoch_train_loss, 'test loss:', epoch_val_loss)
 
     torch.save(encoder, f"{MODEL_PATH}/encoder_{mode}_0.1_20steps_1M{'_warmup' if warmup > 0 else ''}_64.pt")
