@@ -35,7 +35,7 @@ plt.figure(figsize=(8,8))
 
 for i in tqdm(range(xs.shape[0])):
     for j in range(ys.shape[0]):
-        plt.scatter(xs[i], ys[j], c='r')
+        plt.scatter(xs[i], ys[j])
 
 plt.xlim(-np.pi,np.pi)
 plt.ylim(-2*np.pi,2*np.pi)
@@ -55,7 +55,7 @@ for i in tqdm(range(xs.shape[0])):
         x = encoder(x)
         x = x.detach().numpy()
         pts.append(x)
-        plt.scatter(x[0], x[1], c='r')
+        plt.scatter(x[0], x[1])
 
 plt.xlim(-1.1,1.1)
 plt.ylim(-1.1,1.1)

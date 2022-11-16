@@ -33,7 +33,7 @@ def f(Z):
     # if not env.valid_state(x):
     #    return None
     assert(env.valid_state(x))
-    return dynamics(x)
+    return dynamics(z)
 
 '''
 def f(g, X):
