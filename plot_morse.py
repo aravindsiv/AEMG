@@ -87,6 +87,8 @@ for i in tqdm(range(xs.shape[0])):
         color = cmap(cmap_norm(morse_set))
         if morse_set != -1:
             plt.scatter(xs[i], ys[j], color=color,alpha=0.4,marker="s")
+        else:
+            plt.scatter(xs[i], ys[j], color="black",alpha=0.4,marker="s")
 
 plt.xlabel("theta")
 plt.ylabel("thetadot")

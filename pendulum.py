@@ -53,13 +53,11 @@ class PendulumNoCtrl:
         # Transform from x,y,xdot,ydot to theta, thetadot
         # theta = np.arcsin(s[0] / self.l)
         theta = np.arctan2(s[0],s[1])
-        if s[1] != 0: thetadot = s[2] / s[1]
-        else: thetadot = -s[3] / s[0]
-        # s = np.array([theta,thetadot])
+        thetadot = (-s[1] * s[2] + s[0] * s[3]) / (s[0]*s[0] + s[1]*s[1])
         s = self._enforce([theta,thetadot])
         return s
 
-    def valid_state(self,x,eps=0.25):
+    def valid_state(self,x,eps=0.1):
         if np.abs(x[0]) > self.l or np.abs(x[1]) > self.l: return False
         if np.abs(x[2]) > self.l * 2 * np.pi or np.abs(x[3]) > self.l * 2 * np.pi: return False
         if np.abs(x[0]*x[0] + x[1]*x[1] - self.l*self.l) > eps: return False
