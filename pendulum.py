@@ -15,10 +15,10 @@ class PendulumNoCtrl:
         self.inertia = self.m * self.l**2
 
     def _enforce(self, s):
-        while s[0] < -np.pi:
-            s[0] += 2*np.pi
-        while s[0] > np.pi:
-            s[0] -= 2*np.pi
+        # while s[0] < -np.pi:
+        #     s[0] += 2*np.pi
+        # while s[0] > np.pi:
+        #     s[0] -= 2*np.pi
         s[0] = np.clip(s[0], -np.pi, np.pi)
         s[1] = np.clip(s[1], -2*np.pi, 2*np.pi)
         return s
@@ -55,6 +55,7 @@ class PendulumNoCtrl:
         theta = np.arctan2(s[0],s[1])
         if s[1] != 0: thetadot = s[2] / s[1]
         else: thetadot = -s[3] / s[0]
+        # s = np.array([theta,thetadot])
         s = self._enforce([theta,thetadot])
         return s
 
@@ -69,4 +70,5 @@ class PendulumNoCtrl:
         return self.state_bounds
     
     def get_transformed_state_bounds(self):
-        return np.array([[-self.l, self.l], [-self.l, self.l], [-2*self.l*self.g, 2*self.l*self.g], [-2*self.l*self.g, 2*self.l*self.g]])
+        # return np.array([[-self.l, self.l], [-self.l, self.l], [-2*self.l*self.g, 2*self.l*self.g], [-2*self.l*self.g, 2*self.l*self.g]])
+        return np.array([[-self.l, self.l], [-self.l, self.l], [-2*self.l*np.pi, 2*self.l*np.pi], [-2*self.l*np.pi, 2*self.l*np.pi]])

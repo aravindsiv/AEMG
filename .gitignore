@@ -6,3 +6,4 @@ wandb/
 *.pkl
 *root_lqr/
 *root_noctrl/
+*.csv

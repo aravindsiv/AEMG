@@ -4,9 +4,11 @@ mode = 'lqr'
 WARMUP = 20
 EPOCHS = 120
 
-mode = 'noctrl'
-WARMUP = 0
-EPOCHS = 100
+# mode = 'noctrl'
+# WARMUP = 0
+# EPOCHS = 100
+
+theta_thresh = 0.5
 
 steps = 20
 data_file = f"pendulum_{mode}_0.1_{steps}step_1M.txt"
