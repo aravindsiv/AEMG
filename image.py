@@ -26,14 +26,41 @@ decoder = torch.load(f"{MODEL_PATH}/decoder_{mode}_0.1_20steps_1M{'_warmup' if w
 dynamics = torch.load(f"{MODEL_PATH}/dynamics_{mode}_0.1_20steps_1M{'_warmup' if warmup > 0 else ''}_64.pt",map_location=torch.device('cpu'))
 
 def f(Z):
-    # Get the decoding of this state.
-    x = decoder(Z)
-    # Bring x to R^4
+    """Input: numpy array or list
+    Output: numpy array
+    """
+    Z = torch.tensor(Z,dtype=torch.float32)
+    return dynamics(Z).detach().numpy()
+
+def decoded_valid_state(z):
+    # Now x is in [-1,1]^2
+    # print(X)
+    z = torch.tensor(z,dtype=torch.float32)
+    # This brings x to [0,1]^4
+    # print(x)
+    x = decoder(z)
+    # print(x)
+    x = x.detach().numpy()
+    # print(x)
+    # This brings x to R^4
     x = x * (tf_bounds[:,1] - tf_bounds[:,0]) + tf_bounds[:,0]
-    # if not env.valid_state(x):
-    #    return None
-    assert(env.valid_state(x))
-    return dynamics(z)
+    # print(x)
+    return env.valid_state(x)
+
+#
+# def f(Z):
+#     """Input: numpy array or list
+#     Output: numpy array
+#     """
+#     # Get the decoding of this state.
+#     Z = torch.tensor(Z,dtype=torch.float32)
+#     x = decoder(Z)
+#     x = x.detach().numpy()
+#     # Bring x to R^4
+#     x = x * (tf_bounds[:,1] - tf_bounds[:,0]) + tf_bounds[:,0]
+#
+#     if env.valid_state(x): return dynamics(Z).detach().numpy()
+#     else: return False
 
 '''
 def f(g, X):
