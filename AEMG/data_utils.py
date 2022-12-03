@@ -62,3 +62,9 @@ class TrajectoryDataset:
         for f in tqdm(os.listdir(config['data_dir'])):
             data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
             self.trajs.append(data)
+    
+    def __len__(self):
+        return len(self.trajs)
+    
+    def __getitem__(self, idx):
+        return self.trajs[idx]
