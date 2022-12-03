@@ -1,7 +1,7 @@
 import sys 
 import os
 from tqdm import tqdm
-from systems.pendulum import Pendulum
+from AEMG.systems.utils import get_system
 
 sys.path.append(os.environ["DIRTMP_PATH"]+"/examples/tripods/")
 import TimeMap
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     TM = TimeMap.TimeMap("pendulum_lc", args.time_step,
                             "examples/tripods/pendulum_lc.yaml")
     
-    system = Pendulum()
+    system = get_system("pendulum")
 
     num_trajs = args.num_trajs
     num_steps = int(args.time/args.time_step)
