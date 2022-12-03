@@ -1,0 +1,11 @@
+{
+    'system': 'pendulum',
+    'step': 1,
+    'warmup': 0,
+    'epochs': 100,
+    'batch_size': 1024,
+    'learning_rate': 0.001,
+    'data_dir': 'data/pendulum_none_2.0/',
+    'model_dir': 'models/pendulum_none_1K/',
+    'log_dir': 'logs/pendulum_none_1K/',
+}

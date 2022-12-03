@@ -2,8 +2,6 @@
 __pycache__
 .ipynb_checkpoints/
 wandb/
-*.txt
-*.pkl
-*root_lqr/
-*root_noctrl/
-*.csv
+data/
+model/
+log/
