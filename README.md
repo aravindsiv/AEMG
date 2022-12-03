@@ -1,23 +1,14 @@
-Use the config.py file to change some of the important training variables
+# Autoencoders for Morse Graphs
+This package implements autoencoders for high-dimensional dynamical systems. It also provides utilities for using the autoencoders to construct a Morse Graph in the learned latent space.
 
-### Collect data
-1. Set the mode in the config.py file to either `"lqr"` or `"noctrl"`
-2. run `python get_data.py`
+## Installation
+```
+git clone https://github.com/aravindsiv/AEMG.git
+cd AEMG
+pip install -e .
+```
 
-### Train model
+## Usage
+The `examples` directory contains an example of how to collect data and train an autoencoder for a pendulum system defined in ML4KP. 
 
-#### LQR
-1.  set the mode `mode="lqr"`
-2.  set `warmup=20`
-3.  set `epochs=120`
-
-
-#### no control
-1.  set the mode `mode="noctrl"`
-2.  set `warmup=0`
-3.  set `epochs=100`
-
-Run `python train_dynamics_ae.py`
-
-This should create a folder either `root_lqr` or `root_noctrl` which contains the models and the resulting visualizations.
-You can use the models directly from inside these folders.
+`mg_utils.py` contains the necessary functions to construct the MG.

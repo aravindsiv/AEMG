@@ -1,15 +1,16 @@
-from systems import *
+import AEMG
+from AEMG.systems.utils import get_system
 
 import numpy as np
 from tqdm import tqdm 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
+import torch
 
 import os
+import sys
 
 class DynamicsDataset(Dataset):
-    def __init__(self, config, system):
-        assert config['system'] == system.name
-
+    def __init__(self, config):
         Xt = []
         Xnext = []
 
@@ -25,12 +26,20 @@ class DynamicsDataset(Dataset):
         self.Xnext = np.array(Xnext)
 
         # Normalize the data
-        self.X_min = min(np.min(self.Xt, axis=0), np.min(self.Xnext, axis=0))
-        self.X_max = max(np.max(self.Xt, axis=0), np.max(self.Xnext, axis=0))
+        if config['use_limits']:
+            raise NotImplementedError
+        else:
+            # Get bounds from the max of both Xt and Xnext
+            self.X_min = np.min(np.concatenate((self.Xt, self.Xnext), axis=0), axis=0)
+            self.X_max = np.max(np.concatenate((self.Xt, self.Xnext), axis=0), axis=0)
 
         self.Xt = (self.Xt - self.X_min) / (self.X_max - self.X_min)
         self.Xnext = (self.Xnext - self.X_min) / (self.X_max - self.X_min)
 
+        # If model_dir does nto exist, create it
+        if not os.path.exists(config['model_dir']):
+            os.makedirs(config['model_dir'])
+        
         # Write the normalization parameters to a file
         np.savetxt(os.path.join(config['model_dir'], 'X_min.txt'), self.X_min, delimiter=',')
         np.savetxt(os.path.join(config['model_dir'], 'X_max.txt'), self.X_max, delimiter=',')
@@ -45,3 +54,11 @@ class DynamicsDataset(Dataset):
     def __getitem__(self, idx):
         return self.Xt[idx], self.Xnext[idx]
 
+class TrajectoryDataset:
+    # Useful for plotting
+    def __init__(self, config):
+        self.trajs = []
+
+        for f in tqdm(os.listdir(config['data_dir'])):
+            data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
+            self.trajs.append(data)

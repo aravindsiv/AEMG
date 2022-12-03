@@ -1,5 +1,8 @@
 {
     'system': 'pendulum',
+    'use_limits': False,
+    'high_dims': 4,
+    'low_dims': 2,
     'step': 1,
     'warmup': 0,
     'epochs': 100,

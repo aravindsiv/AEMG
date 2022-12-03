@@ -1,17 +1,16 @@
 import numpy as np 
+from AEMG.systems.system import BaseSystem
 
-class Pendulum:
-    def __init__(self):
+class Pendulum(BaseSystem):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.name = "pendulum"
 
         self.state_bounds = np.array([[-np.pi, np.pi], [-2*np.pi, 2*np.pi]])
         
         self.l = 0.5
 
-        self.dt = 0.01
-
-    def sample_state(self):
-        return np.random.uniform(self.state_bounds[:,0], self.state_bounds[:,1])
+        self.dt = 0.01    
     
     def transform(self,s):
         x = self.l * np.sin(s[0])
@@ -25,8 +24,8 @@ class Pendulum:
         thetadot = -(-s[1] * s[2] + s[0] * s[3]) / (s[0]*s[0] + s[1]*s[1])
         return np.array([theta,thetadot])
     
-    def get_original_bounds(self):
+    def get_true_bounds(self):
         return self.state_bounds
     
-    def get_state_bounds(self):
+    def get_bounds(self):
         return np.array([[-self.l, self.l], [-self.l, self.l], [-2*self.l*np.pi, 2*self.l*np.pi], [-2*self.l*np.pi, 2*self.l*np.pi]])
