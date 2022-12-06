@@ -1,0 +1,15 @@
+{
+    'system': 'physics_pendulum',
+    'use_limits': False,
+    'high_dims': 5,
+    'low_dims': 2,
+    'step': 100,
+    'warmup': 0,
+    'epochs': 500,
+    'patience': 50,
+    'batch_size': 1024,
+    'learning_rate': 0.001,
+    'data_dir': 'data/physics_pendulum/',
+    'model_dir': 'models/physics_pendulum/',
+    'log_dir': 'logs/physics_pendulum/',
+}

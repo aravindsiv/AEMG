@@ -9,8 +9,6 @@ class Pendulum(BaseSystem):
         self.state_bounds = np.array([[-np.pi, np.pi], [-2*np.pi, 2*np.pi]])
         
         self.l = 0.5
-
-        self.dt = 0.01    
     
     def transform(self,s):
         x = self.l * np.sin(s[0])
