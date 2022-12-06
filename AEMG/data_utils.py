@@ -4,6 +4,7 @@ from AEMG.systems.utils import get_system
 import numpy as np
 from tqdm import tqdm 
 from torch.utils.data import Dataset
+from AEMG.systems.utils import get_system
 import torch
 
 import os
@@ -15,12 +16,14 @@ class DynamicsDataset(Dataset):
         Xnext = []
 
         step = config['step']
+        system = get_system(config['system'])
+        print("Getting data for: ",system.name)
 
         for f in tqdm(os.listdir(config['data_dir'])):
             data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
             for i in range(data.shape[0] - step):
-                Xt.append(data[i])
-                Xnext.append(data[i + step])
+                Xt.append(system.transform(data[i]))
+                Xnext.append(system.transform(data[i + step]))
             
         self.Xt = np.array(Xt)
         self.Xnext = np.array(Xnext)
@@ -59,8 +62,16 @@ class TrajectoryDataset:
     def __init__(self, config):
         self.trajs = []
 
+        system = get_system(config['system'])
+        print("Getting data for: ",system.name)
+
         for f in tqdm(os.listdir(config['data_dir'])):
-            data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
+            raw_data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
+            # Transform each state in the trajectory
+            data = []
+            for i in range(raw_data.shape[0]):
+                data.append(system.transform(raw_data[i]))
+            data = np.array(data)
             self.trajs.append(data)
     
     def __len__(self):

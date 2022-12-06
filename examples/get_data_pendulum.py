@@ -51,13 +51,7 @@ if __name__ == "__main__":
                     traj.append(TM.pendulum_no_ctrl(state))
             
             traj = np.array(traj)
-            
-            # Transform the trajectory to 4-D.
-            tf_traj = []
-            for k in range(traj.shape[0]):
-                tf_traj.append(system.transform(traj[k]))
-            tf_traj = np.array(tf_traj)
-            np.savetxt(f"{save_dir}/{counter}.txt",tf_traj,delimiter=",")
+            np.savetxt(f"{save_dir}/{counter}.txt",traj,delimiter=",")
             counter += 1
 
 

@@ -11,3 +11,9 @@ class BaseSystem:
 
     def get_bounds(self):
         return self.state_bounds
+    
+    def transform(self, s):
+        return s
+    
+    def inverse_transform(self, s):
+        return s
