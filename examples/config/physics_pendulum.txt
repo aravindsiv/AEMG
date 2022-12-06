@@ -3,7 +3,7 @@
     'use_limits': False,
     'high_dims': 5,
     'low_dims': 2,
-    'step': 100,
+    'step': 10,
     'warmup': 0,
     'epochs': 500,
     'patience': 50,
