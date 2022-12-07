@@ -1,5 +1,6 @@
 {
     'system': 'pendulum',
+    'control': 'lqr',
     'use_limits': False,
     'high_dims': 4,
     'low_dims': 2,
