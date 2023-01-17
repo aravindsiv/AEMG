@@ -3,5 +3,5 @@ __pycache__
 .ipynb_checkpoints/
 AEMG.egg-info/
 *data/
-*models/
 *logs/
+examples/test.py
