@@ -13,4 +13,5 @@
     'data_dir': 'data/cartpole_lqr/',
     'model_dir': 'models/cartpole_lqr/',
     'log_dir': 'logs/cartpole_lqr/',
+    'out_dir': 'out/cartpole_lqr/',
 }
