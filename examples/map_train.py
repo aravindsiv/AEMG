@@ -24,10 +24,10 @@ if __name__ == "__main__":
     with open(config_fname, 'r') as f:
         config = eval(f.read())
 
-    if config["system"] == "discrete_map":
+    # if config["system"] == "discrete_map":
         
-        step = len(np.loadtxt(os.path.join(config['data_dir'], "0.txt"), delimiter=','))
-        config["step"] = step//2
+    #     step = len(np.loadtxt(os.path.join(config['data_dir'], "0.txt"), delimiter=','))
+    #     config["step"] = step//2
 
     dataset = DynamicsDataset(config)
 
@@ -41,9 +41,12 @@ if __name__ == "__main__":
     print("Train size: ", len(train_dataset))
     print("Test size: ", len(test_dataset))
 
-    encoder  = Encoder(config)
+    encoder = Encoder(config)
     dynamics = LatentDynamics(config)
-    decoder  = Decoder(config)
+    decoder = Decoder(config)
+    # encoder  = Encoder(config["high_dims"],config["low_dims"], number_layers=config["number_layers"])
+    # dynamics = LatentDynamics(config["low_dims"], number_layers=config["number_layers"])
+    # decoder  = Decoder(config["low_dims"],config["high_dims"], number_layers=config["number_layers"])
 
     criterion = torch.nn.MSELoss(reduction='mean')
     optimizer = torch.optim.Adam(set(list(encoder.parameters()) + list(dynamics.parameters()) + list(decoder.parameters())), 
@@ -56,6 +59,10 @@ if __name__ == "__main__":
 
     patience = config["patience"]
 
+    weight_dynamics = 1
+    weight_input = 1
+
+
     for epoch in tqdm(range(config["epochs"])):
         loss_ae1_train = 0
         loss_ae2_train = 0
@@ -64,7 +71,25 @@ if __name__ == "__main__":
         current_train_loss = 0
         epoch_train_loss = 0
 
-        warmup = 1 if epoch <= config["warmup"] else 0
+        ## test one
+        # warmup = 1 if epoch <= config["warmup"] else 0
+        # opposite_warmup = 1
+
+        # test two
+        warmup = 0 if epoch <= config["warmup"] else 1
+        opposite_warmup = 0 if warmup else 1
+
+        # # test three
+        # if epoch <= config["warmup"]:
+        #     warmup = 0
+        #     opposite_warmup = 1
+        # elif config["warmup"] < epoch <= config["patience"]:
+        #     warmup = 1
+        #     opposite_warmup = 0
+        # else:
+        #     warmup = 1
+        #     opposite_warmup = 1
+
 
         encoder.train()
         dynamics.train()
@@ -87,7 +112,7 @@ if __name__ == "__main__":
             loss_ae2 = criterion(x_tau, x_tau_pred)
             loss_dyn = criterion(z_tau, z_tau_pred)
 
-            loss_total = loss_ae1 + loss_ae2 + warmup * loss_dyn
+            loss_total = (loss_ae1 * weight_input + loss_ae2) * opposite_warmup + warmup * weight_dynamics * loss_dyn
 
             # Backward pass
             loss_total.backward()
@@ -96,9 +121,9 @@ if __name__ == "__main__":
             current_train_loss += loss_total.item()
             epoch_train_loss += loss_total.item()
 
-            loss_ae1_train += loss_ae1.item()
-            loss_ae2_train += loss_ae2.item()
-            loss_dyn_train += loss_dyn.item() * warmup
+            loss_ae1_train += loss_ae1.item() * weight_input * opposite_warmup
+            loss_ae2_train += loss_ae2.item() * opposite_warmup
+            loss_dyn_train += loss_dyn.item() * warmup * weight_dynamics
             counter += 1
 
             if (i+1) % 100 == 0:
@@ -135,13 +160,13 @@ if __name__ == "__main__":
                 loss_ae2 = criterion(x_tau, x_tau_pred)
                 loss_dyn = criterion(z_tau, z_tau_pred)
 
-                loss_total = loss_ae1 + loss_ae2 + warmup * loss_dyn
+                loss_total = (loss_ae1 * weight_input + loss_ae2) * opposite_warmup + warmup * weight_dynamics * loss_dyn
 
                 epoch_test_loss += loss_total.item()
 
-                loss_ae1_test += loss_ae1.item()
-                loss_ae2_test += loss_ae2.item()
-                loss_dyn_test += loss_dyn.item() * warmup
+                loss_ae1_test += loss_ae1.item() * weight_input * opposite_warmup
+                loss_ae2_test += loss_ae2.item() * opposite_warmup
+                loss_dyn_test += loss_dyn.item() * warmup * weight_dynamics
                 counter += 1
 
             test_losses['loss_ae1'].append(loss_ae1_test / counter)
@@ -149,6 +174,7 @@ if __name__ == "__main__":
             test_losses['loss_dyn'].append(loss_dyn_test / counter)
             test_losses['loss_total'].append(epoch_test_loss / counter)
 
+            # test 3
             if epoch >= patience and np.mean(test_losses['loss_total'][-patience:]) >= np.mean(test_losses['loss_total'][-patience:-1]):
                 break
 

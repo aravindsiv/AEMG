@@ -2,7 +2,7 @@ import sys
 import os
 from tqdm import tqdm
 from AEMG.systems.utils import get_system
-import Grid
+# import Grid
 
 import numpy as np
 np.set_printoptions(suppress=True)
@@ -20,9 +20,9 @@ def sample_points(lower_bounds, upper_bounds, num_pts):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--time', help='Trajectory length', type=float, default=2.0)
+    parser.add_argument('--time', help='Trajectory length', type=float, default=1.0)
     parser.add_argument('--time_step', help='Time step', type=float, default=0.1)
-    parser.add_argument('--num_trajs', help='Number of trajectories', type=int, default=10000)
+    parser.add_argument('--num_trajs', help='Number of trajectories', type=int, default=1000)
     parser.add_argument('--mode', help='Mode', type=str, default='none')
     parser.add_argument('--save_dir', help='Save directory', type=str, default='data')
 
@@ -39,31 +39,34 @@ if __name__ == "__main__":
 
     dim = len(upper_bounds)
 
-    num_pts = num_trajs
+    num_trajs = args.num_trajs
+    num_steps = int(args.time/args.time_step)
 
     if random_sample:
-        X = sample_points(lower_bounds, upper_bounds, num_pts)
-    else:
-        grid = Grid.Grid(lower_bounds, upper_bounds, dim + 1)
-        X = grid.uniform_sample()
-
-    num_steps = len(X)
+        X = sample_points(lower_bounds, upper_bounds, num_trajs)
+    # else:
+    #     grid = Grid.Grid(lower_bounds, upper_bounds, dim + 1)
+    #     X = grid.uniform_sample()
 
     def f(X):
-        Y0 = np.arctan(4*X[:,0]).reshape(-1,1)
-        Y1 = X[:,1::]/2
-        return np.concatenate((Y0, Y1), axis = 1)
+        Y0 = np.array([np.arctan(2*X[0])])
+        Y1 = X[1::]/2
+        return np.concatenate((Y0, Y1))
 
-    Y = f(f(f(f(f(f(X))))))
-
-    data = np.concatenate((X, Y), axis = 0)
-    
     # Create the data directory if it doesn't exist
     # save_dir = args.save_dir + "/discrete_map_" + str(args.num_trajs)
     save_dir = args.save_dir + "/discrete_map"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    
-    counter = 0
 
-    np.savetxt(f"{save_dir}/{counter}.txt",data,delimiter=",")    
+    counter = 0
+    for x in tqdm(X):
+        # Get the full trajectory
+        traj = [x]
+        for k in range(num_steps):
+            state = traj[k]
+            traj.append(f(state))
+        
+        traj = np.array(traj)
+        np.savetxt(f"{save_dir}/{counter}.txt",traj,delimiter=",")
+        counter += 1 
