@@ -17,9 +17,9 @@ class DynamicsUtils:
             self.X_min = np.loadtxt(os.path.join(config['model_dir'], 'X_min.txt'), delimiter=',')
             self.X_max = np.loadtxt(os.path.join(config['model_dir'], 'X_max.txt'), delimiter=',')
 
-        self.encoder  = Encoder(config['high_dims'], config['low_dims'])
-        self.decoder  = Decoder(config['low_dims'], config['high_dims'])
-        self.dynamics = LatentDynamics(config['low_dims'])
+        self.encoder  = Encoder(config)
+        self.decoder  = Decoder(config)
+        self.dynamics = LatentDynamics(config)
 
         self.encoder = torch.load(os.path.join(config['model_dir'], 'encoder.pt'))
         self.decoder = torch.load(os.path.join(config['model_dir'], 'decoder.pt'))

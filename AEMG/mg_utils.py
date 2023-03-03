@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 
 from AEMG.systems.utils import get_system
-from AEMG.models import *
 
 import os
 
