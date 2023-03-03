@@ -41,9 +41,12 @@ if __name__ == "__main__":
     print("Train size: ", len(train_dataset))
     print("Test size: ", len(test_dataset))
 
-    encoder  = Encoder(config["high_dims"],config["low_dims"], number_layers=config["number_layers"])
-    dynamics = LatentDynamics(config["low_dims"], number_layers=config["number_layers"])
-    decoder  = Decoder(config["low_dims"],config["high_dims"], number_layers=config["number_layers"])
+    encoder = Encoder(config)
+    dynamics = LatentDynamics(config)
+    decoder = Decoder(config)
+    # encoder  = Encoder(config["high_dims"],config["low_dims"], number_layers=config["number_layers"])
+    # dynamics = LatentDynamics(config["low_dims"], number_layers=config["number_layers"])
+    # decoder  = Decoder(config["low_dims"],config["high_dims"], number_layers=config["number_layers"])
 
     criterion = torch.nn.MSELoss(reduction='mean')
     optimizer = torch.optim.Adam(set(list(encoder.parameters()) + list(dynamics.parameters()) + list(decoder.parameters())), 
