@@ -1,5 +1,4 @@
 
-from AEMG.models import *
 from AEMG.mg_utils import *
 from AEMG.data_utils import *
 from AEMG.dynamics_utils import *
