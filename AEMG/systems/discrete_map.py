@@ -1,7 +1,7 @@
 import numpy as np 
 from AEMG.systems.system import BaseSystem
 
-class Discrete_map(BaseSystem):
+class DiscreteMap(BaseSystem):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
         self.name = "discrete_map"

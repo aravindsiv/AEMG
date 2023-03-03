@@ -2,6 +2,7 @@
 from AEMG.models import *
 from AEMG.mg_utils import *
 from AEMG.data_utils import *
+from AEMG.dynamics_utils import *
 np.set_printoptions(suppress=True)
 
 config_fname = "config/cartpole_lqr.txt"
@@ -9,7 +10,7 @@ config_fname = "config/cartpole_lqr.txt"
 with open(config_fname, 'r') as f:
     config = eval(f.read())
 
-mg_utils = MorseGraphUtils(config)
+dynamics = DynamicsUtils(config)
 
 mg_out_utils = MorseGraphOutputProcessor(config)
 attractor_nodes = mg_out_utils.attractor_nodes
@@ -19,8 +20,8 @@ traj_dataset = TrajectoryDataset(config)
 ground_truth = []
 predicted = []
 for i in tqdm(range(len(traj_dataset))):
-    ground_truth.append(mg_utils.system.achieved_goal(traj_dataset[i][-1]))
-    enc = mg_utils.encode(traj_dataset[i][0])
+    ground_truth.append(dynamics.system.achieved_goal(traj_dataset[i][-1]))
+    enc = dynamics.encode(traj_dataset[i][0])
     predicted.append(mg_out_utils.which_morse_set(enc) == ATTRACTOR_NODE)
 
 print("Successful trials: ", sum(ground_truth))

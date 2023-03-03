@@ -2,7 +2,7 @@ from AEMG.systems.pendulum import Pendulum
 from AEMG.systems.physics_pendulum import PhysicsPendulum
 from AEMG.systems.hopper import Hopper
 from AEMG.systems.cartpole import Cartpole
-from AEMG.systems.discrete_map import Discrete_map
+from AEMG.systems.discrete_map import DiscreteMap
 
 def get_system(name, **kwargs):
     if name == "pendulum":
@@ -14,7 +14,7 @@ def get_system(name, **kwargs):
     elif name == "cartpole":
         system = Cartpole(**kwargs)
     elif name == "discrete_map":
-        system = Discrete_map(**kwargs)
+        system = DiscreteMap(**kwargs)
     else:
         print("That system does not exist!")
         raise NotImplementedError
