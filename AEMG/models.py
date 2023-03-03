@@ -7,9 +7,15 @@ class Encoder(nn.Module):
     def __init__(self, config):
         num_layers = config['num_layers'] if 'num_layers' in config else 2
         hidden_shape = config['hidden_shape'] if 'hidden_shape' in config else 32
-        input_shape = config['high_dims'] if 'high_dims' in config else raise ValueError("high_dims not specified in config")
-        lower_shape = config['low_dims'] if 'low_dims' in config else raise ValueError("low_dims not specified in config")
-
+        if 'high_dims' in config:
+            input_shape = config['high_dims']
+        else:
+            raise ValueError("high_dims not specified in config")
+        if 'low_dims' in config:
+            lower_shape = config['low_dims']
+        else:
+            raise ValueError("low_dims not specified in config")
+        
         super(Encoder, self).__init__()
 
         self.encoder = nn.Sequential()
@@ -30,8 +36,14 @@ class Decoder(nn.Module):
     def __init__(self, config):
         num_layers = config['num_layers'] if 'num_layers' in config else 2
         hidden_shape = config['hidden_shape'] if 'hidden_shape' in config else 32
-        input_shape = config['high_dims'] if 'high_dims' in config else raise ValueError("high_dims not specified in config")
-        lower_shape = config['low_dims'] if 'low_dims' in config else raise ValueError("low_dims not specified in config")
+        if 'high_dims' in config:
+            input_shape = config['high_dims']
+        else:
+            raise ValueError("high_dims not specified in config")
+        if 'low_dims' in config:
+            lower_shape = config['low_dims']
+        else:
+            raise ValueError("low_dims not specified in config")
 
         super(Decoder, self).__init__()
 
@@ -55,7 +67,10 @@ class LatentDynamics(nn.Module):
     def __init__(self, config):
         num_layers = config['num_layers'] if 'num_layers' in config else 2
         hidden_shape = config['hidden_shape'] if 'hidden_shape' in config else 32
-        lower_shape = config['low_dims'] if 'low_dims' in config else raise ValueError("low_dims not specified in config")
+        if 'low_dims' in config:
+            lower_shape = config['low_dims']
+        else:
+            raise ValueError("low_dims not specified in config")
 
         super(LatentDynamics, self).__init__()
 
