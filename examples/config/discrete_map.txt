@@ -13,4 +13,5 @@
     'model_dir': 'models/discrete_map/',
     'log_dir': 'logs/discrete_map/',
     'num_layers': 1,
+    'seed': 0,
 }

@@ -21,6 +21,9 @@ if __name__ == "__main__":
     with open(config_fname) as f:
         config = eval(f.read())
     
+    torch.manual_seed(config["seed"])
+    np.random.seed(config["seed"])
+    
     dataset = DynamicsDataset(config)
 
     train_size = int(0.8*len(dataset))
@@ -37,7 +40,9 @@ if __name__ == "__main__":
     experiment = Training(config, loaders)
 
     experiment.train_encoder_decoder(config["epochs"], config["patience"], loss='ae1')
+    experiment.reset_losses()
     experiment.train_dynamics(config["epochs"], config["patience"])
+    experiment.reset_losses()
     experiment.train_all(config["epochs"], config["patience"])
 
     experiment.save_models()

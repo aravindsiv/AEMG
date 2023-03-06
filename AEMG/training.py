@@ -230,7 +230,7 @@ class Training:
 
                 self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.test_loader))
                 self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.test_loader))
-                self.train_losses['loss_total'].append(loss_dyn_test / len(self.test_loader))
+                self.test_losses['loss_total'].append(epoch_test_loss / len(self.test_loader))
 
             scheduler.step(loss_dyn_test / len(self.test_loader))
             
