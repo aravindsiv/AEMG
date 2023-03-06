@@ -38,11 +38,25 @@ if __name__ == "__main__":
     loaders = {'train': train_loader, 'test': test_loader}
 
     experiment = Training(config, loaders)
+    exp_ids = config['experiment'].split('*')
 
-    experiment.train_encoder_decoder(config["epochs"], config["patience"], loss='ae1')
-    experiment.reset_losses()
-    experiment.train_dynamics(config["epochs"], config["patience"])
-    experiment.reset_losses()
-    experiment.train_all(config["epochs"], config["patience"])
+    for i, e in enumerate(exp_ids):
+        if e == 'Enc_L1':
+            experiment.train_encoder_decoder(config["epochs"], config["patience"], loss='ae1')
+        elif e == 'Enc_L2':
+            experiment.train_encoder_decoder(config["epochs"], config["patience"], loss='ae2')
+        elif e == 'Enc_L1L2':
+            experiment.train_encoder_decoder(config["epochs"], config["patience"], loss='both')
+        elif e == 'Dyn_L3':
+            experiment.train_dynamics(config["epochs"], config["patience"], use_l2=False)
+        elif e == 'Dyn_L2L3':
+            experiment.train_dynamics(config["epochs"], config["patience"], use_l2=True)
+        elif e == 'All':
+            experiment.train_all(config["epochs"], config["patience"])
+        else:
+            print("Invalid training setting")
+            exit()
+        experiment.save_logs(suffix = "Step " + str(i))
+        experiment.reset_losses()
 
     experiment.save_models()

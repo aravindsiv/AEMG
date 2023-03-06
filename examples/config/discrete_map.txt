@@ -14,4 +14,5 @@
     'log_dir': 'logs/discrete_map/',
     'num_layers': 1,
     'seed': 0,
+    'experiment': 'Enc_L1*Dyn_L3*All',
 }

@@ -54,7 +54,7 @@ class Training:
         Function that trains only the encoder and decoder models.
         It will stop if the test loss does not improve for "patience" epochs.
         '''
-        assert loss in ['ae1', 'ae2'], "Loss must be either 'ae1' or 'ae2'"
+        assert loss in ['ae1', 'ae2', 'both'], "Loss must be either 'ae1' or 'ae2' or 'both'"
         optimizer = torch.optim.Adam(set(list(self.encoder.parameters()) + list(self.decoder.parameters())), lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=0.001, patience=10, verbose=True)
         for epoch in tqdm(range(epochs)):
@@ -88,6 +88,12 @@ class Training:
                 elif loss == 'ae1':
                     loss_ae1 = self.criterion(x_t, x_t_pred) + self.criterion(x_tau, x_tau_pred)
                     loss_ae2 = torch.zeros(1).to(self.device)
+                
+                elif loss == 'both':
+                    z_tau_pred = self.dynamics(z_t)
+                    x_tau_pred_dyn = self.decoder(z_tau_pred)
+                    loss_ae2 = self.criterion(x_tau, x_tau_pred_dyn)
+                    loss_ae1 = self.criterion(x_t, x_t_pred) + self.criterion(x_tau, x_tau_pred)
                 
                 loss_total = loss_ae1 + loss_ae2
 
@@ -128,6 +134,12 @@ class Training:
                     elif loss == 'ae1':
                         loss_ae1 = self.criterion(x_t, x_t_pred) + self.criterion(x_tau, x_tau_pred)
                         loss_ae2 = torch.zeros(1).to(self.device)
+
+                    elif loss == 'both':
+                        z_tau_pred = self.dynamics(z_t)
+                        x_tau_pred_dyn = self.decoder(z_tau_pred)
+                        loss_ae2 = self.criterion(x_tau, x_tau_pred_dyn)
+                        loss_ae1 = self.criterion(x_t, x_t_pred) + self.criterion(x_tau, x_tau_pred)
 
                     loss_total = loss_ae1 + loss_ae2
 
