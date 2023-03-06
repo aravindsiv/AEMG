@@ -1,5 +1,3 @@
-import os
-
 from AEMG.data_utils import DynamicsDataset
 from AEMG.models import *
 from AEMG.training import Training
@@ -13,10 +11,11 @@ from torch.utils.data import DataLoader
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config',help='Config file inside config/',type=str,default='discrete_map.txt')
+    parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
+    parser.add_argument('--config',help='Config file inside config_dir',type=str,default='discrete_map.txt')
 
     args = parser.parse_args()
-    config_fname = "config/" + args.config
+    config_fname = args.config_dir + args.config
 
     with open(config_fname) as f:
         config = eval(f.read())
