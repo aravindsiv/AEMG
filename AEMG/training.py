@@ -142,13 +142,13 @@ class Training:
             scheduler.step(loss_ae1_test / len(self.test_loader))
 
             if epoch >= patience:
-                if np.mean(self.test_losses['loss_ae1'][-patience:]) > np.mean(self.test_losses['loss_ae1'][-patience-1:-1]):
+                if np.mean(self.test_losses['loss_total'][-patience:]) > np.mean(self.test_losses['loss_total'][-patience-1:-1]):
                     print("Early stopping")
                     break
             
             print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.train_loader), epoch_test_loss / len(self.test_loader)))
 
-    def train_dynamics(self, epochs=1000, patience=50):
+    def train_dynamics(self, epochs=1000, patience=50, use_l2=False):
         '''
         Function that trains only the dynamics model with the "L3" loss.
         It will stop if the test loss does not improve for "patience" epochs.
@@ -157,6 +157,7 @@ class Training:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=0.001, patience=10, verbose=True)
         for epoch in tqdm(range(epochs)):
             loss_dyn_train = 0
+            loss_ae2_train = 0
 
             epoch_train_loss = 0
             epoch_test_loss  = 0
@@ -174,22 +175,33 @@ class Training:
                 z_tau = self.encoder(x_tau)
 
                 z_tau_pred = self.dynamics(z_t)
+                x_tau_pred_dyn = self.decoder(z_tau_pred)
 
                 # Compute losses
                 loss_dyn = self.criterion(z_tau_pred, z_tau)
+                loss_total = loss_dyn
+
+                if use_l2:
+                    loss_ae2 = self.criterion(x_tau, x_tau_pred_dyn)
+                    loss_total += loss_ae2
+                else:
+                    loss_ae2 = torch.zeros(1).to(self.device)
 
                 # Backward pass
-                loss_dyn.backward()
+                loss_total.backward()
                 optimizer.step()
 
                 loss_dyn_train += loss_dyn.item()
-                epoch_train_loss += loss_dyn.item()
+                loss_ae2_train += loss_ae2.item()
+                epoch_train_loss += loss_total.item()
 
             self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.train_loader))
+            self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.train_loader))
             self.train_losses['loss_total'].append(epoch_train_loss / len(self.train_loader))
 
             with torch.no_grad():
                 loss_dyn_test = 0
+                loss_ae2_test = 0
 
                 self.dynamics.eval()
 
@@ -201,19 +213,29 @@ class Training:
                     z_tau = self.encoder(x_tau)
 
                     z_tau_pred = self.dynamics(z_t)
+                    x_tau_pred_dyn = self.decoder(z_tau_pred)
 
                     loss_dyn = self.criterion(z_tau_pred, z_tau)
+                    loss_total = loss_dyn
+
+                    if use_l2:
+                        loss_ae2 = self.criterion(x_tau, x_tau_pred_dyn)
+                        loss_total += loss_ae2
+                    else:
+                        loss_ae2 = torch.zeros(1).to(self.device)
 
                     loss_dyn_test += loss_dyn.item()
-                    epoch_test_loss += loss_dyn.item()
+                    loss_ae2_test += loss_ae2.item()
+                    epoch_test_loss += loss_total.item()
 
                 self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.test_loader))
+                self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.test_loader))
                 self.train_losses['loss_total'].append(loss_dyn_test / len(self.test_loader))
 
             scheduler.step(loss_dyn_test / len(self.test_loader))
             
             if epoch >= patience:
-                if np.mean(self.test_losses['loss_dyn'][-patience:]) > np.mean(self.test_losses['loss_dyn'][-patience-1:-1]):
+                if np.mean(self.test_losses['loss_total'][-patience:]) > np.mean(self.test_losses['loss_total'][-patience-1:-1]):
                     print("Early stopping")
                     break
             
