@@ -5,7 +5,6 @@
     'high_dims': 4,
     'low_dims': 2,
     'step': 1,
-    'warmup': 0,
     'epochs': 500,
     'patience': 50,
     'batch_size': 1024,
