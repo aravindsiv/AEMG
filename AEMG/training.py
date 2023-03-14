@@ -362,7 +362,7 @@ class Training:
         It will stop if the test loss does not improve for "patience" epochs.
         '''
         weight_bool = [bool(i) for i in weight]
-        list_parameters = weight_bool[0] * (list(self.encoder.parameters()) + list(self.decoder.parameters()))
+        list_parameters = (weight_bool[0] or weight_bool[1]) * (list(self.encoder.parameters()) + list(self.decoder.parameters()))
         list_parameters += weight_bool[2] * list(self.dynamics.parameters())
         optimizer = torch.optim.Adam(list_parameters, lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=0.001, patience=patience, verbose=True)
@@ -422,7 +422,7 @@ class Training:
                 loss_ae2_test = 0
                 loss_dyn_test = 0
 
-                if weight_bool[0]: 
+                if (weight_bool[0] or weight_bool[1]): 
                     self.encoder.eval() 
                     self.decoder.eval() 
                 if weight_bool[2]: 
@@ -464,4 +464,3 @@ class Training:
                     break
             
             # print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.train_loader), epoch_test_loss / len(self.test_loader)))
-       
