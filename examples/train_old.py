@@ -9,8 +9,7 @@ import argparse
 
 from torch.utils.data import DataLoader
 
-
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
     parser.add_argument('--config',help='Config file inside config_dir',type=str,default='discrete_map.txt')
@@ -41,19 +40,22 @@ def main():
     exp_ids = config['experiment'].split('*')
 
     for i, e in enumerate(exp_ids):
-        exp = e.split('_')
-
-        if len(exp)==3:
-            weight = [int(j) for j in exp]
-            print(weight)
-            experiment.train(config["epochs"], config["patience"], weight)
+        if e == 'Enc_L1':
+            experiment.train_encoder_decoder(config["epochs"], config["patience"], loss='ae1')
+        elif e == 'Enc_L2':
+            experiment.train_encoder_decoder(config["epochs"], config["patience"], loss='ae2')
+        elif e == 'Enc_L1L2':
+            experiment.train_encoder_decoder(config["epochs"], config["patience"], loss='both')
+        elif e == 'Dyn_L3':
+            experiment.train_dynamics(config["epochs"], config["patience"], use_l2=False)
+        elif e == 'Dyn_L2L3':
+            experiment.train_dynamics(config["epochs"], config["patience"], use_l2=True)
+        elif e == 'All':
+            experiment.train_all(config["epochs"], config["patience"])
         else:
             print("Invalid training setting")
             exit()
-        experiment.save_logs(suffix = "Step" + e)
+        experiment.save_logs(suffix = "Step " + str(i))
         experiment.reset_losses()
 
     experiment.save_models()
-
-if __name__ == "__main__":
-    main()

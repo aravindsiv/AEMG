@@ -76,19 +76,23 @@ if __name__ == "__main__":
         # opposite_warmup = 1
 
         # test two
-        warmup = 0 if epoch <= config["warmup"] else 1
-        opposite_warmup = 0 if warmup else 1
+        # warmup = 0 if epoch <= config["warmup"] else 1
+        # opposite_warmup = 0 if warmup else 1
 
-        # # test three
-        # if epoch <= config["warmup"]:
-        #     warmup = 0
-        #     opposite_warmup = 1
-        # elif config["warmup"] < epoch <= config["patience"]:
-        #     warmup = 1
-        #     opposite_warmup = 0
-        # else:
-        #     warmup = 1
-        #     opposite_warmup = 1
+        # test three
+        if epoch <= config["warmup"]:
+            weight_L1 = 1
+            weight_L2 = 1
+            weight_L3 = 0
+ 
+        elif config["warmup"] < epoch <= config["patience"]:
+            weight_L1 = 0
+            weight_L2 = 1
+            weight_L3 = 1
+        else:
+            weight_L1 = 1
+            weight_L2 = 1
+            weight_L3 = 1
 
 
         encoder.train()
@@ -112,7 +116,7 @@ if __name__ == "__main__":
             loss_ae2 = criterion(x_tau, x_tau_pred)
             loss_dyn = criterion(z_tau, z_tau_pred)
 
-            loss_total = (loss_ae1 * weight_input + loss_ae2) * opposite_warmup + warmup * weight_dynamics * loss_dyn
+            loss_total = loss_ae1 * weight_L1  + weight_L2 * loss_ae2  + weight_L3 * loss_dyn
 
             # Backward pass
             loss_total.backward()
@@ -121,9 +125,9 @@ if __name__ == "__main__":
             current_train_loss += loss_total.item()
             epoch_train_loss += loss_total.item()
 
-            loss_ae1_train += loss_ae1.item() * weight_input * opposite_warmup
-            loss_ae2_train += loss_ae2.item() * opposite_warmup
-            loss_dyn_train += loss_dyn.item() * warmup * weight_dynamics
+            loss_ae1_train += loss_ae1.item() * weight_L1
+            loss_ae2_train += loss_ae2.item() * weight_L2
+            loss_dyn_train += loss_dyn.item() * weight_L3
             counter += 1
 
             if (i+1) % 100 == 0:
@@ -160,13 +164,13 @@ if __name__ == "__main__":
                 loss_ae2 = criterion(x_tau, x_tau_pred)
                 loss_dyn = criterion(z_tau, z_tau_pred)
 
-                loss_total = (loss_ae1 * weight_input + loss_ae2) * opposite_warmup + warmup * weight_dynamics * loss_dyn
+                loss_total = loss_ae1 * weight_L1  + weight_L2 * loss_ae2  + weight_L3 * loss_dyn
 
                 epoch_test_loss += loss_total.item()
 
-                loss_ae1_test += loss_ae1.item() * weight_input * opposite_warmup
-                loss_ae2_test += loss_ae2.item() * opposite_warmup
-                loss_dyn_test += loss_dyn.item() * warmup * weight_dynamics
+                loss_ae1_train += loss_ae1.item() * weight_L1
+                loss_ae2_train += loss_ae2.item() * weight_L2
+                loss_dyn_train += loss_dyn.item() * weight_L3
                 counter += 1
 
             test_losses['loss_ae1'].append(loss_ae1_test / counter)
@@ -175,11 +179,11 @@ if __name__ == "__main__":
             test_losses['loss_total'].append(epoch_test_loss / counter)
 
             # test 3
-            if epoch >= patience and np.mean(test_losses['loss_total'][-patience:]) >= np.mean(test_losses['loss_total'][-patience:-1]):
-                break
+            # if epoch >= patience and np.mean(test_losses['loss_total'][-patience:]) >= np.mean(test_losses['loss_total'][-patience:-1]):
+            #     break
 
-            if epoch >= config["warmup"]:
-                scheduler.step(epoch_test_loss / counter)
+            # if epoch >= config["warmup"]:
+            #     scheduler.step(epoch_test_loss / counter)
             
         print("Epoch: {}, Train Loss: {}, Test Loss: {}".format(epoch, epoch_train_loss / counter, epoch_test_loss / counter))
 
