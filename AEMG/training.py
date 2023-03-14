@@ -354,7 +354,29 @@ class Training:
             
             print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.train_loader), epoch_test_loss / len(self.test_loader)))
     
+    def forward(self, x_t, x_tau):
+        x_t = x_t.to(self.device)
+        x_tau = x_tau.to(self.device)
 
+        z_t = self.encoder(x_t)
+        x_t_pred = self.decoder(z_t)
+
+        z_tau = self.encoder(x_tau)
+        x_tau_pred = self.decoder(z_tau)
+
+        z_tau_pred = self.dynamics(z_t)
+        x_tau_pred_dyn = self.decoder(z_tau_pred)
+
+        return (x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn)
+
+    def losses(self, foward_pass, weight):
+        x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn = foward_pass
+
+        loss_ae1 = self.criterion(x_t, x_t_pred)
+        loss_ae2 = self.criterion(x_tau, x_tau_pred_dyn)
+        loss_dyn = self.criterion(z_tau_pred, z_tau)
+        loss_total = loss_ae1 * weight[0] + loss_ae2 * weight[1] + loss_dyn * weight[2]
+        return loss_ae1, loss_ae2, loss_dyn, loss_total
 
     def train(self, epochs=1000, patience=50, weight=[1,1,1]):
         '''
@@ -385,24 +407,9 @@ class Training:
                 optimizer.zero_grad()
 
                 # Forward pass
-                x_t = x_t.to(self.device)
-                x_tau = x_tau.to(self.device)
-
-                z_t = self.encoder(x_t)
-                x_t_pred = self.decoder(z_t)
-
-                z_tau = self.encoder(x_tau)
-                x_tau_pred = self.decoder(z_tau)
-
-                z_tau_pred = self.dynamics(z_t)
-
+                forward_pass = self.forward(x_t, x_tau)
                 # Compute losses
-                loss_ae1 = self.criterion(x_t, x_t_pred)
-                loss_ae2 = self.criterion(x_tau, x_tau_pred)
-                loss_dyn = self.criterion(z_tau_pred, z_tau)
-
-                loss_total = loss_ae1 * weight[0] + loss_ae2 * weight[1] + loss_dyn * weight[2]
-
+                loss_ae1, loss_ae2, loss_dyn, loss_total = self.losses(forward_pass, weight)
                 # Backward pass
                 loss_total.backward()
                 optimizer.step()
@@ -429,22 +436,10 @@ class Training:
                     self.dynamics.eval()
 
                 for i, (x_t, x_tau) in enumerate(self.test_loader):
-                    x_t = x_t.to(self.device)
-                    x_tau = x_tau.to(self.device)
-
-                    z_t = self.encoder(x_t)
-                    x_t_pred = self.decoder(z_t)
-
-                    z_tau = self.encoder(x_tau)
-                    x_tau_pred = self.decoder(z_tau)
-
-                    z_tau_pred = self.dynamics(z_t)
-
-                    loss_ae1 = self.criterion(x_t, x_t_pred)
-                    loss_ae2 = self.criterion(x_tau, x_tau_pred)
-                    loss_dyn = self.criterion(z_tau_pred, z_tau)
-
-                    loss_total = loss_ae1 * weight[0] + loss_ae2 * weight[1] + loss_dyn * weight[2]
+                    # Forward pass
+                    forward_pass = self.forward(x_t, x_tau)
+                    # Compute losses
+                    loss_ae1, loss_ae2, loss_dyn, loss_total = self.losses(forward_pass, weight)
 
                     loss_ae1_test += loss_ae1.item() * weight[0]
                     loss_ae2_test += loss_ae2.item() * weight[1]
@@ -463,4 +458,4 @@ class Training:
                     print("Early stopping")
                     break
             
-            # print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.train_loader), epoch_test_loss / len(self.test_loader)))
+            print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.train_loader), epoch_test_loss / len(self.test_loader)))
