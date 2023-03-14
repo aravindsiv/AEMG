@@ -7,7 +7,7 @@ if __name__ == "__main__":
         config = eval(f.read())
 
     # Possible values for seed
-    seeds = list(range(0, 1))
+    seeds = list(range(0, 100))
     # Possible values for the experiment
     exp_ids = [
         '1_1_1',
