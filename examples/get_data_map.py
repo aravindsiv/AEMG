@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument('--time', help='Trajectory length', type=float, default=1.0)
     parser.add_argument('--time_step', help='Time step', type=float, default=0.1)
     parser.add_argument('--num_trajs', help='Number of trajectories', type=int, default=1000)
-    parser.add_argument('--save_dir', help='Save directory', type=str, default='data')
+    parser.add_argument('--save_dir', help='Save directory', type=str, default='/discrete_map')
 
     args = parser.parse_args()
     
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         return np.concatenate((Y0, Y1))
 
     # Create the data directory if it doesn't exist
-    save_dir = args.save_dir + "/discrete_map"
+    save_dir = args.save_dir
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
