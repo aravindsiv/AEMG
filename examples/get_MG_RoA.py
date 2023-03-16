@@ -129,7 +129,10 @@ def main():
     # compute_roa(map_graph, morse_graph, base_name)
 
     experiment_name = f"{config['experiment']}&{config['num_layers']}&{config['data_dir'][5:-1]}"
-    write_experiments(morse_graph, experiment_name)
+
+    name = "out_exp" + config['data_dir'][5:-1]
+
+    write_experiments(morse_graph, experiment_name, name)
 
 
 if __name__ == "__main__":
