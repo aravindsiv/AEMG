@@ -97,6 +97,6 @@ if __name__ == "__main__":
                     new_config['data_dir'] = 'data/' + new_config['control'] + str(size) + 'k'
 
                     # Dump config to file 
-                    new_config_fname = os.path.join(new_config_dir, f'{exp_id}-d{str(size)}k-l{num_layer}-s{seed}.txt')
+                    new_config_fname = os.path.join(new_config_dir, f'{exp_id}D{str(size)}kL{num_layer}S{seed}.txt')
                     with open(new_config_fname, 'w') as f:
                         f.write(str(new_config))
