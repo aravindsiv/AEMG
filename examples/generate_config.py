@@ -85,8 +85,8 @@ if __name__ == "__main__":
         new_config_dir = 'test_config' + str(size) + 'k'
         if not os.path.exists(new_config_dir):
             os.makedirs(new_config_dir)
-            
-        for exp_id in exp_ids:
+
+        for index, exp_id in enumerate(exp_ids):
             for num_layer in num_layers:
                 for seed in seeds:
                     # Create a new config dictionary
@@ -99,6 +99,8 @@ if __name__ == "__main__":
                     new_config['data_dir'] = 'data/' + new_config['control'] + str(size) + 'k'
 
                     # Dump config to file 
-                    new_config_fname = os.path.join(new_config_dir, f'{exp_id}D{str(size)}kL{num_layer}S{seed}.txt')
+                    # new_config_fname = os.path.join(new_config_dir, f'{exp_id}D{str(size)}kL{num_layer}S{seed}.txt')
+
+                    new_config_fname = os.path.join(new_config_dir, f'{index}D{str(size)}kL{num_layer}S{seed}.txt')
                     with open(new_config_fname, 'w') as f:
                         f.write(str(new_config))
