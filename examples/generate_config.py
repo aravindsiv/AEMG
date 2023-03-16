@@ -77,9 +77,9 @@ if __name__ == "__main__":
         os.makedirs(new_config_dir)
 
     # comment for few tests
-    exp_ids = ['1_0_0*0_0_1*1_1_0*0_0_1*100_1_1']
-    num_layers = [1]
-    seeds = [0,1,2]
+    # exp_ids = ['1_0_0*0_0_1*1_1_0*0_0_1*100_1_1']
+    # num_layers = [1]
+    # seeds = [0,1,2]
 
     # Generate all possible combinations of the above
     
