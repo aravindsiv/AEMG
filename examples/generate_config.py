@@ -72,9 +72,7 @@ if __name__ == "__main__":
     # Data size in k for traing
     data_size = [1, 10, 100]
 
-    new_config_dir = 'test_config'
-    if not os.path.exists(new_config_dir):
-        os.makedirs(new_config_dir)
+
 
     # comment for few tests
     # exp_ids = ['1_0_0*0_0_1*1_1_0*0_0_1*100_1_1']
@@ -82,9 +80,13 @@ if __name__ == "__main__":
     # seeds = [0,1,2]
 
     # Generate all possible combinations of the above
-    
-    for exp_id in exp_ids:
-        for size in data_size:
+
+    for size in data_size:
+        new_config_dir = 'test_config' + str(size) + 'k'
+        if not os.path.exists(new_config_dir):
+            os.makedirs(new_config_dir)
+            
+        for exp_id in exp_ids:
             for num_layer in num_layers:
                 for seed in seeds:
                     # Create a new config dictionary
