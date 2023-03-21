@@ -95,7 +95,7 @@ if __name__ == "__main__":
             os.makedirs(new_config_dir)
 
         for index, exp_id in enumerate(exp_ids):
-            new_dir += f'{new_config_dir}/{exp_id}'
+            new_dir = f'{new_config_dir}/{exp_id}'
             if not os.path.exists(new_dir):
                 os.makedirs(new_dir)
 
