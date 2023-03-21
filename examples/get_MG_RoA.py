@@ -18,7 +18,13 @@ import os
 
 import numpy as np
 
-def write_experiments(morse_graph, experiment_name, name="out_exp"):
+def write_experiments(morse_graph, experiment_name, name_folder, name="out_exp"):
+
+    new_out_dir = 'output/' + name_folder
+    if not os.path.exists(new_out_dir):
+        os.makedirs(new_out_dir)
+
+    name = f"{new_out_dir}/{name}.txt"
 
     with open(name, "a") as file:
         file.write(experiment_name)
@@ -56,6 +62,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
     parser.add_argument('--config',help='Config file inside config_dir',type=str,default='discrete_map.txt')
+    parser.add_argument('--name_out',help='Name of the out file',type=str,default='out_exp')
 
     args = parser.parse_args()
     config_fname = args.config_dir + args.config
@@ -67,7 +74,7 @@ def main():
 
     MG_util = CMGDB_util.CMGDB_util()
 
-    sb = 14
+    sb = 0
     number_of_steps = 20 * config['step']
     if config['system'] == "discrete_map":
         number_of_steps = 1
@@ -128,11 +135,9 @@ def main():
 
     # compute_roa(map_graph, morse_graph, base_name)
 
-    experiment_name = f"{config['experiment']}&{config['num_layers']}&{config['data_dir'][5:-1]}"
+    experiment_name = f"{config['experiment']}&{config['num_layers']}&{config['data_dir'][5::]}"
 
-    name = "out_exp" + config['data_dir'][5:-1]
-
-    write_experiments(morse_graph, experiment_name, name)
+    write_experiments(morse_graph, experiment_name, config['data_dir'][5::], args.name_out)
 
 
 if __name__ == "__main__":
