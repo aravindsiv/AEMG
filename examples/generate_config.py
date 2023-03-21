@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
 
     # # comment for few tests
-    # exp_ids = ['e1x00_00e1x_0e1x0_e2x1e2x']
+    # exp_ids = ['e1x00_00e1x']
     # num_layers = [1]
     # seeds = [0]
     # exp_name = "bistable"
@@ -109,6 +109,7 @@ if __name__ == "__main__":
                     new_config['experiment'] = exp_id
                     new_config['num_layers'] = num_layer
                     new_config['data_dir'] = 'data/' + new_config['control'] + str(size) + 'k'
+                    new_config['model_dir'] = 'models/' + new_config['control'] + str(size) + 'k/' + exp_id
 
                     # Dump config to file 
                     # new_config_fname = os.path.join(new_config_dir, f'{exp_id}D{str(size)}kL{num_layer}S{seed}.txt')
