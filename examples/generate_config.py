@@ -113,6 +113,6 @@ if __name__ == "__main__":
                     # Dump config to file 
                     # new_config_fname = os.path.join(new_config_dir, f'{exp_id}D{str(size)}kL{num_layer}S{seed}.txt')
 
-                    new_config_fname = os.path.join(new_config_dir, f'{index}D{str(size)}kL{num_layer}S{seed}.txt')
+                    new_config_fname = os.path.join(new_dir, f'{index}D{str(size)}kL{num_layer}S{seed}.txt')
                     with open(new_config_fname, 'w') as f:
                         f.write(str(new_config))
