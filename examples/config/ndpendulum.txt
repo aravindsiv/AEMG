@@ -1,0 +1,15 @@
+{
+    'system': 'ndpendulum',
+    'control': 'lqr',
+    'use_limits': False,
+    'high_dims': 9,
+    'low_dims': 2,
+    'step': 1,
+    'epochs': 500,
+    'patience': 50,
+    'batch_size': 1024,
+    'learning_rate': 0.001,
+    'data_dir': 'data/ndpendulum_lqr/',
+    'model_dir': 'models/ndpendulum_lqr/',
+    'log_dir': 'logs/ndpendulum_lqr/',
+}
