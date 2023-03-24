@@ -16,7 +16,7 @@ class DynamicsDataset(Dataset):
         Xnext = []
 
         step = config['step']
-        system = get_system(config['system'])
+        system = get_system(config['system'], config['high_dims'])
         print("Getting data for: ",system.name)
 
         for f in tqdm(os.listdir(config['data_dir'])):
@@ -62,7 +62,7 @@ class TrajectoryDataset:
     def __init__(self, config):
         self.trajs = []
 
-        system = get_system(config['system'])
+        system = get_system(config['system'], config['high_dims'])
         print("Getting data for: ",system.name)
 
         for f in tqdm(os.listdir(config['data_dir'])):
