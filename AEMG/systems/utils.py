@@ -5,7 +5,7 @@ from AEMG.systems.hopper import Hopper
 from AEMG.systems.cartpole import Cartpole
 from AEMG.systems.discrete_map import DiscreteMap
 
-def get_system(name, dims=None, **kwargs):
+def get_system(name, dims=10, **kwargs):
     if name == "pendulum":
         system = Pendulum(**kwargs)
     elif name == "ndpendulum" and dims is not None:
