@@ -30,9 +30,6 @@ if __name__ == "__main__":
     parser.add_argument('--system', help='Select the system', type=str, default='discrete_map')
 
     args = parser.parse_args()
-
-    args.system = 'ndpendulum'
-    args.save_dir = '/data/ndpendulum_lqr'
     
     system = get_system(args.system)
 
