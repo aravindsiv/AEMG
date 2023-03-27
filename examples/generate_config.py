@@ -108,7 +108,7 @@ if __name__ == "__main__":
                     new_config['experiment'] = exp_id
                     new_config['num_layers'] = num_layer
                     new_config['data_dir'] = f"data/{new_config['system']}_{new_config['control']}{size}k"
-                    new_config['model_dir'] = f"models/{new_config['system']}_{new_config['control']}{size}k{exp_id}"
+                    new_config['model_dir'] = f"models/{new_config['system']}_{new_config['control']}{size}k/{exp_id}"
                     # new_config['data_dir'] = 'data/' + new_config['control'] + str(size) + 'k'
                     # new_config['model_dir'] = 'models/' + new_config['control'] + str(size) + 'k/' + exp_id
                     
