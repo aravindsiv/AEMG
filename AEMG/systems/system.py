@@ -5,6 +5,9 @@ class BaseSystem:
         self.name = "base_system"
 
         self.state_bounds = np.array([[-1, 1], [-1, 1]])
+    
+    def f(self,s):
+        return s
 
     def sample_state(self):
         return np.random.uniform(self.state_bounds[:,0], self.state_bounds[:,1])
