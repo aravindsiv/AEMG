@@ -88,7 +88,7 @@ def main():
     MG_util = CMGDB_util.CMGDB_util()
 
     sb = 14
-    number_of_steps = 20 * config['step']
+    number_of_steps = 5 * config['step']  # 0.5 seconds in total
     if config['system'] == "discrete_map":
         number_of_steps = 1
     uniform_sample = True

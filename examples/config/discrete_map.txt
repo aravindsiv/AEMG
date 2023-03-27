@@ -14,5 +14,5 @@
     'log_dir': 'logs/bistable/',
     'num_layers': 1,
     'seed': 0,
-    'experiment': '1_0_0*0_0_1*1_1_0*0_0_1',
+    'experiment': '1e2x1',
 }
