@@ -1,7 +1,14 @@
-import os 
+import os
+import argparse 
 
 if __name__ == "__main__":
-    config_fname = 'config/discrete_map.txt'
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config',help='Config file inside config_dir',type=str,default='discrete_map.txt')
+
+    args = parser.parse_args()
+
+    config_fname = f'config/{args.config}'
 
     with open(config_fname) as f:
         config = eval(f.read())
@@ -36,13 +43,6 @@ if __name__ == "__main__":
         '100_011_11e2x',
         '100_011_e1x11',
         '100_011_e2x11',
-        '100_010_111',
-        '100_010_11e1x',
-        '100_010_11e2x',
-        '100_010_e1x11',
-        '100_010_e2x11',
-        '100_010_0e1x1',
-        '100_010_0e2x1',
         '100_001_010_111',
         '100_001_010_11e1x',
         '100_001_010_11e2x',
@@ -81,16 +81,15 @@ if __name__ == "__main__":
 
 
 
-    # # comment for few tests
-    # exp_ids = ['e1x00_00e1x']
+    # comment for few tests
+    # exp_ids = ['1e2x1']
     # num_layers = [1]
     # seeds = [0]
-    # exp_name = "bistable"
 
     # Generate all possible combinations of the above
 
     for size in data_size:
-        new_config_dir = f'config/exp_{config["control"]}{str(size)}k'
+        new_config_dir = f'config/{config["system"]}_{config["control"]}{str(size)}k'
         if not os.path.exists(new_config_dir):
             os.makedirs(new_config_dir)
 
@@ -108,9 +107,11 @@ if __name__ == "__main__":
                     new_config['seed'] = seed
                     new_config['experiment'] = exp_id
                     new_config['num_layers'] = num_layer
-                    new_config['data_dir'] = 'data/' + new_config['control'] + str(size) + 'k'
-                    new_config['model_dir'] = 'models/' + new_config['control'] + str(size) + 'k/' + exp_id
-
+                    new_config['data_dir'] = f"data/{new_config['system']}_{new_config['control']}{size}k"
+                    new_config['model_dir'] = f"models/{new_config['system']}_{new_config['control']}{size}k{exp_id}"
+                    # new_config['data_dir'] = 'data/' + new_config['control'] + str(size) + 'k'
+                    # new_config['model_dir'] = 'models/' + new_config['control'] + str(size) + 'k/' + exp_id
+                    
                     # Dump config to file 
                     # new_config_fname = os.path.join(new_config_dir, f'{exp_id}D{str(size)}kL{num_layer}S{seed}.txt')
 

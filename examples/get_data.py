@@ -32,7 +32,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.system = 'ndpendulum'
-    args.save_dir = '/data/ndpendulum'
+    args.save_dir = '/data/ndpendulum_lqr'
     
     system = get_system(args.system)
 
