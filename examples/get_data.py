@@ -67,11 +67,13 @@ if __name__ == "__main__":
     counter = 0
     for x in tqdm(X):
         # Get the full trajectory
-        traj = [system.transform(x)]
+        traj = [x]
+        # traj = [system.transform(x)]
         state_temp = x
         for k in range(num_steps):
             state_temp = f(state_temp)
-            traj.append(system.transform(state_temp))
+            traj.append(state_temp)
+            # traj.append(system.transform(state_temp))
         
         traj = np.array(traj) 
         np.savetxt(f"{save_dir}/{counter}.txt",traj,delimiter=",")
