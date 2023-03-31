@@ -23,9 +23,10 @@ def main():
         config = eval(f.read())
     
     torch.manual_seed(config["seed"])
-    np.random.seed(config["seed"])
     
     dataset = DynamicsDataset(config)
+    
+    np.random.seed(config["seed"])
 
     train_size = int(0.8*len(dataset))
     test_size = len(dataset) - train_size
