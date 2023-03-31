@@ -7,6 +7,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',help='Base config file inside examples/config/',type=str,default='discrete_map.txt')
     parser.add_argument('--dir', help='Directory to save generated config files', type=str, default='tmp_config/')
+    parser.add_argument('--name', help='Name of the experiment', type=str,required=True)
 
     args = parser.parse_args()
 
@@ -65,7 +66,7 @@ if __name__ == "__main__":
                         f.write(str(new_config))
 
 
-    with open(f'all_exps.txt', 'w') as f:
+    with open(f'{args.name}_all_exps.txt', 'w') as f:
         # Write as follows: <id>: <>,...
         for row in all_exps:
             f.write(f'{row["id"]}:')
