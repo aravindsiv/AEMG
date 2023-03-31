@@ -15,7 +15,7 @@ class TrainingConfig:
         ids = self.weights_str.split('_')
         self.weights = []
         for _, id in enumerate(ids):
-            self.weights.append([float(e) for e in id.split('x')])
+            self.weights.append([float(e) for e in id.split('x')[:-1]])
             if len(self.weights[-1]) != 3:
                 print("Expected 3 values per training config, got ", len(self.weights[-1]))
                 raise ValueError
