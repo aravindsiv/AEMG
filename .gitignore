@@ -6,3 +6,5 @@ AEMG.egg-info/
 *logs/
 tmp*/
 examples/test.py
+output/
+*models/
