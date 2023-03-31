@@ -50,7 +50,7 @@ if __name__ == "__main__":
                     row['seed'] = seed
                     row['experiment'] = exp
                     row['num_layers'] = nl
-                    row['data_size'] = ds
+                    row['data_size'] = f"{config['system']}_{config['control']}{ds}k"
                 
                     all_exps.append(row)
 
