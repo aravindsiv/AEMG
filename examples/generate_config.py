@@ -81,7 +81,7 @@ def generate_shell(args, path_config, dir_counter):
     with open(shell_name, "w") as file:
         file.write(halfs_0)
 
-        write_path = f"\nsearch_dir={path_config}\n"
+        write_path = f"\nsearch_dir={path_config}/\n"
         file.write(write_path)
 
         file.write(halfs_1)
