@@ -2,13 +2,46 @@ import os
 import argparse 
 from tqdm import tqdm
 
+
+def exp_cluster(name_sh = "/tmp_sh/aemg.sh"):
+    name_sh = os.getcwd() + name_sh
+
+    with open(name_sh, "r") as reader:
+        halfs = reader.read().split("# split_here #")
+    return halfs[0], halfs[1]
+
+def generate_shell(args, path_config):
+    save_folder = os.path.join(os.getcwd(),f"tmp_sh_{args.name}")
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+
+    halfs_0, halfs_1 = exp_cluster()
+
+
+    shell_name = f"{save_folder}/{args.shell}.sh"
+    with open(shell_name, "w") as file:
+        file.write(halfs_0)
+
+        write_path = f"\nsearch_dir={path_config}\n"
+        file.write(write_path)
+
+        file.write(halfs_1)
+
+
+
+
+    
+
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',help='Base config file inside examples/config/',type=str,default='discrete_map.txt')
     parser.add_argument('--dir', help='Directory to save generated config files', type=str, default='tmp_config/')
     parser.add_argument('--name', help='Name of the experiment', type=str,required=True)
-    parser.add_argument('--max_jobs',help='Split into multiple files',type=int,default=100)
+    parser.add_argument('--max_jobs',help='Split into multiple files',type=int,default=1000)
+    parser.add_argument('--shell',help='Generate shell script to send job',type=str,default="")
 
     args = parser.parse_args()
 
@@ -66,7 +99,9 @@ if __name__ == "__main__":
                     new_config['log_dir'] = f"tmp_logs/{row['id']}/"
 
                     counter += 1
-                    if counter % args.max_jobs == 0: dir_counter += 1
+                    if counter % args.max_jobs == 0: 
+                        dir_counter += 1
+                        if args.shell !="": generate_shell(args, f'{args.dir}{dir_counter}')
                     if not os.path.exists(f'{args.dir}{dir_counter}'):
                         os.makedirs(f'{args.dir}{dir_counter}')
 
@@ -74,8 +109,9 @@ if __name__ == "__main__":
                     with open(f'{args.dir}{dir_counter}/{row["id"]}.txt', 'w') as f:
                         f.write(str(new_config))
 
+    if args.shell !="": generate_shell(args, f'{args.dir}{dir_counter}')
 
-    output = os.getcwd() + "/output"
+    output = os.getcwd() + "/tmp_all_exps"
     if not os.path.exists(output):
         os.makedirs(output)
     
