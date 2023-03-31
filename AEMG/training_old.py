@@ -7,12 +7,12 @@ from tqdm import tqdm
 from AEMG.models import *
 
 class Training:
-    def __init__(self, config, loaders, print_out):
+    def __init__(self, config, loaders, verbose):
         self.encoder = Encoder(config)
         self.dynamics = LatentDynamics(config)
         self.decoder = Decoder(config)
 
-        self.print_out = bool(print_out)
+        self.verbose = bool(verbose)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Device: ", self.device)
@@ -457,9 +457,9 @@ class Training:
             
             if epoch >= patience:
                 if np.mean(self.test_losses['loss_total'][-patience:]) > np.mean(self.test_losses['loss_total'][-patience-1:-1]):
-                    if self.print_out:
+                    if self.verbose:
                         print("Early stopping")
                     break
             
-            if self.print_out:
+            if self.verbose:
                 print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.train_loader), epoch_test_loss / len(self.test_loader)))
