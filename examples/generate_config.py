@@ -8,6 +8,7 @@ if __name__ == "__main__":
     parser.add_argument('--config',help='Base config file inside examples/config/',type=str,default='discrete_map.txt')
     parser.add_argument('--dir', help='Directory to save generated config files', type=str, default='tmp_config/')
     parser.add_argument('--name', help='Name of the experiment', type=str,required=True)
+    parser.add_argument('--max_jobs',help='Split into multiple files',type=int,default=100)
 
     args = parser.parse_args()
 
@@ -41,10 +42,12 @@ if __name__ == "__main__":
     # Possible values for the data size (in k)
     data_size = [1, 10, 100]
 
+    counter = 0
+    dir_counter = 0
     for exp in tqdm(exp_ids):
-        for nl in num_layers:
-            for ds in data_size:
-                for seed in seeds:
+        for ds in data_size:
+            for seed in seeds:
+                for nl in num_layers:
                     row = {}
                     row['id'] = uuid_generator().hex
                     row['seed'] = seed
@@ -62,7 +65,13 @@ if __name__ == "__main__":
                     new_config['model_dir'] = f"tmp_models/{row['id']}/"
                     new_config['log_dir'] = f"tmp_logs/{row['id']}/"
 
-                    with open(f'{args.dir}/{row["id"]}.txt', 'w') as f:
+                    counter += 1
+                    if counter % args.max_jobs == 0: dir_counter += 1
+                    if not os.path.exists(f'{args.dir}{dir_counter}'):
+                        os.makedirs(f'{args.dir}{dir_counter}')
+
+                    # with open(f'{args.dir}/{row["id"]}.txt', 'w') as f:
+                    with open(f'{args.dir}{dir_counter}/{row["id"]}.txt', 'w') as f:
                         f.write(str(new_config))
 
 
