@@ -24,7 +24,7 @@ def write_experiments(morse_graph, number_of_attactors, experiment_name, name_fo
     if not os.path.exists(new_out_dir):
         os.makedirs(new_out_dir)
 
-    name = f"{new_out_dir}/{name}.txt"
+    name = f"{new_out_dir}/{name}"
 
     with open(name, "a") as file:
         file.write(experiment_name)
