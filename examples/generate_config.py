@@ -65,7 +65,7 @@ if __name__ == "__main__":
                         f.write(str(new_config))
 
 
-    with open(f'{args.dir}/all_exps.txt', 'w') as f:
+    with open(f'all_exps.txt', 'w') as f:
         # Write as follows: <id>: <>,...
         for row in all_exps:
             f.write(f'{row["id"]}:')
@@ -74,7 +74,8 @@ if __name__ == "__main__":
                     continue
                 f.write(f'{value},')
             f.write('\n')
-
+    
+    print("Generated all configs. Please save the all_exps.txt file.")
 
     '''
     # Possible values for the experiment
