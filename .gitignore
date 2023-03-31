@@ -4,4 +4,5 @@ __pycache__
 AEMG.egg-info/
 *data/
 *logs/
+tmp*/
 examples/test.py

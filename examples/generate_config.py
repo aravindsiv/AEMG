@@ -1,10 +1,12 @@
 import os
 import argparse 
+from tqdm import tqdm
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config',help='Config file inside config_dir',type=str,default='discrete_map.txt')
+    parser.add_argument('--config',help='Base config file inside examples/config/',type=str,default='discrete_map.txt')
+    parser.add_argument('--dir', help='Directory to save generated config files', type=str, default='tmp_config/')
 
     args = parser.parse_args()
 
@@ -12,9 +14,69 @@ if __name__ == "__main__":
 
     with open(config_fname) as f:
         config = eval(f.read())
+    
+    if not os.path.exists(args.dir):
+        os.makedirs(args.dir)
+
+    uuid_generator = None
+    try:
+        import libpyDirtMP as prx
+        uuid_generator = prx.generate_uuid()
+    except:
+        print("Using python uuid generator")
+        import uuid
+        uuid_generator = uuid.uuid4
+
+    all_exps = []
 
     # Possible values for seed
-    seeds = list(range(0, 1000))
+    seeds = list(range(0, 10))
+    # Possible values for the experiment
+    exp_ids = [
+        '1x1x1x', '1x100x1x'
+    ]
+    # Possible values for the number of layers
+    num_layers = [1, 2]
+    # Possible values for the data size (in k)
+    data_size = [1, 10, 100]
+
+    for exp in tqdm(exp_ids):
+        for nl in num_layers:
+            for ds in data_size:
+                for seed in seeds:
+                    row = {}
+                    row['id'] = uuid_generator().hex
+                    row['seed'] = seed
+                    row['experiment'] = exp
+                    row['num_layers'] = nl
+                    row['data_size'] = ds
+                
+                    all_exps.append(row)
+
+                    new_config = config.copy()
+                    new_config['seed'] = seed
+                    new_config['experiment'] = exp
+                    new_config['num_layers'] = nl
+                    new_config['data_dir'] = f"data/{new_config['system']}_{new_config['control']}{ds}k"
+                    new_config['model_dir'] = f"tmp_models/{row['id']}/"
+                    new_config['log_dir'] = f"tmp_logs/{row['id']}/"
+
+                    with open(f'{args.dir}/{row["id"]}.txt', 'w') as f:
+                        f.write(str(new_config))
+
+
+    with open(f'{args.dir}/all_exps.txt', 'w') as f:
+        # Write as follows: <id>: <>,...
+        for row in all_exps:
+            f.write(f'{row["id"]}:')
+            for key, value in row.items():
+                if key == 'id':
+                    continue
+                f.write(f'{value},')
+            f.write('\n')
+
+
+    '''
     # Possible values for the experiment
 
     exp_ids = [
@@ -118,3 +180,4 @@ if __name__ == "__main__":
                     new_config_fname = os.path.join(new_dir, f'{index}D{str(size)}kL{num_layer}S{seed}.txt')
                     with open(new_config_fname, 'w') as f:
                         f.write(str(new_config))
+    '''
