@@ -75,7 +75,11 @@ if __name__ == "__main__":
                         f.write(str(new_config))
 
 
-    with open(f'{args.name}_all_exps.txt', 'w') as f:
+    output = os.getcwd() + "/output"
+    if not os.path.exists(output):
+        os.makedirs(output)
+    
+    with open(f'{output}/{args.name}_all_exps.txt', 'w') as f:
         # Write as follows: <id>: <>,...
         for row in all_exps:
             f.write(f'{row["id"]}:')
