@@ -44,11 +44,11 @@ def main():
     trainer = Training(config, loaders, bool(int(args.verbose)))
     experiment = TrainingConfig(config['experiment'])
 
-    for exp in experiment:
+    for i,exp in enumerate(experiment):
         if args.verbose:
             print("Training loss weights: ", exp)
         trainer.train(config["epochs"], config["patience"], exp)
-        trainer.save_logs(suffix = "Step" + exp)
+        trainer.save_logs(suffix =str(i))
         trainer.reset_losses()
     
     trainer.save_models()
