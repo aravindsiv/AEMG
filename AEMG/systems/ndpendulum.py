@@ -10,7 +10,7 @@ class NdPendulum(BaseSystem):
 
         self.state_bounds = np.array([[-np.pi, np.pi], [-2*np.pi, 2*np.pi]])
         
-        np.random.seed(dims)
+        
         # Find smallest N such that dims < N*N
         N = int(np.ceil(np.sqrt(dims)))
         # Get a grid of N*N points
@@ -18,10 +18,13 @@ class NdPendulum(BaseSystem):
         thdot = np.linspace(-2*np.pi, 2*np.pi, N)
 
         index = np.arange(N*N)
-        np.random.shuffle(index)
 
-        index = np.random.choice(N*N, dims, replace=False)
-        # index = index[0:dims]
+        # set random choice, it might not work with trainning.
+        # np.random.seed(dims)
+        # np.random.shuffle(index)
+        # index = np.random.choice(N*N, dims, replace=False)
+
+        index = index[0:dims]
 
         xx, yy = np.meshgrid(th, thdot)
 
