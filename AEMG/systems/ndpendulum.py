@@ -23,6 +23,7 @@ class NdPendulum(BaseSystem):
         # np.random.seed(dims)
         # np.random.shuffle(index)
         # index = np.random.choice(N*N, dims, replace=False)
+        
 
         index = index[0:dims]
 

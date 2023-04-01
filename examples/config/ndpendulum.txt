@@ -14,5 +14,5 @@
     'log_dir': 'logs/ndpendulum_lqr/',
     'num_layers': 1,
     'seed': 0,
-    'experiment': '1e2x1',
+    'experiment': '1x1x1x',
 }
