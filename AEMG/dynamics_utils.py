@@ -43,3 +43,26 @@ class DynamicsUtils:
         x = torch.tensor(x, dtype=torch.float32)
         x = self.decoder(x).detach().numpy()
         return x * (self.X_max - self.X_min) + self.X_min
+
+class EnsembleDynamics:
+    def __init__(self, configs):
+        self.dynamics = [DynamicsUtils(config) for config in configs]
+    
+    def f(self, z):
+        # This function takes as input a latent state and returns the next latent state
+        all_dyn = [dynamics.f(z) for dynamics in self.dynamics]
+        mean_dyn = np.mean(all_dyn, axis=0)
+        std_dyn = np.std(all_dyn, axis=0)
+        return (mean_dyn, std_dyn)
+
+    def encode(self, x):
+        # This function takes as input a raw state (un-normalized)
+        # and returns the latent state
+        all_enc = [dynamics.encode(x) for dynamics in self.dynamics]
+        mean_enc = np.mean(all_enc, axis=0)
+        std_enc = np.std(all_enc, axis=0)
+        return (mean_enc, std_enc)
+
+    def decode(self, x):
+        print("Decoding ensemble dynamics is not implemented.")
+        raise NotImplementedError
