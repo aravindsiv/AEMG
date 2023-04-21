@@ -18,7 +18,7 @@ import os
 
 import numpy as np
 
-def write_experiments(morse_graph, number_of_attactors, experiment_name, name_folder, name="out_exp"):
+def write_experiments(morse_graph, experiment_name, name_folder, name="out_exp"):
 
     new_out_dir = 'output/' + name_folder
     if not os.path.exists(new_out_dir):
@@ -37,19 +37,7 @@ def write_experiments(morse_graph, number_of_attactors, experiment_name, name_fo
             if len(morse_graph.adjacencies(v)) == 0:
                 counting_attractors += 1
 
-        if counting_attractors >= number_of_attactors:
-            file.write(",1\n")
-            return      
-
-
-        # for u in range(morse_graph.num_vertices()):
-            
-        #     if len(morse_graph.adjacencies(u)) > 1:
-        #         file.write(",1\n")
-        #         return    
-                
-
-        file.write(",0\n")
+        file.write(f",{counting_attractors}\n")
 
 
 def compute_roa(map_graph, morse_graph, base_name):
@@ -150,15 +138,7 @@ def main():
 
     experiment_name = f"{config['experiment']}&{config['num_layers']}&{config['data_dir'][5::]}"
     
-
-    if config['system'].count('pendulum') >= 1:
-        number_of_attactors = 3
-    else:
-        number_of_attactors = 2
-
-
-    write_experiments(morse_graph, number_of_attactors, experiment_name, config['data_dir'][5::], args.name_out)
-
+    write_experiments(morse_graph, experiment_name, config['data_dir'][5::], args.name_out)
 
 if __name__ == "__main__":
     main()
