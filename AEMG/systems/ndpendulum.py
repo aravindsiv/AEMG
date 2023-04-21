@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 class NdPendulum(BaseSystem):
-    def __init__(self, dims=10, **kwargs):
+    def __init__(self, dims=9, **kwargs):
         super().__init__(**kwargs)
         self.name = "ndpendulum"
 
