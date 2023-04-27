@@ -137,39 +137,44 @@ if __name__ == "__main__":
     # Possible values for the data size (in k)
     data_size = [1, 10, 100]
 
+    # Possible values for steps
+    steps = [1, 3, 6]
+
     counter = 0
     dir_counter = 0
     for exp in tqdm(exp_ids):
         for ds in data_size:
             for seed in seeds:
                 for nl in num_layers:
-                    row = {}
-                    row['id'] = uuid_generator().hex
-                    row['seed'] = seed
-                    row['experiment'] = exp
-                    row['num_layers'] = nl
-                    row['data_size'] = f"{config['system']}_{config['control']}{ds}k"
-                
-                    all_exps.append(row)
+                    for step in steps:
+                        row = {}
+                        row['id'] = uuid_generator().hex
+                        row['seed'] = seed
+                        row['experiment'] = exp
+                        row['num_layers'] = nl
+                        row['data_size'] = f"{config['system']}_{config['control']}{ds}k"
+                        row["step"] = step
+                    
+                        all_exps.append(row)
 
-                    new_config = config.copy()
-                    new_config['seed'] = seed
-                    new_config['experiment'] = exp
-                    new_config['num_layers'] = nl
-                    new_config['data_dir'] = f"data/{new_config['system']}_{new_config['control']}{ds}k"
-                    new_config['model_dir'] = f"tmp_models/{row['id']}/"
-                    new_config['log_dir'] = f"tmp_logs/{row['id']}/"
+                        new_config = config.copy()
+                        new_config['seed'] = seed
+                        new_config['experiment'] = exp
+                        new_config['num_layers'] = nl
+                        new_config['data_dir'] = f"data/{new_config['system']}_{new_config['control']}{ds}k"
+                        new_config['model_dir'] = f"tmp_models/{row['id']}/"
+                        new_config['log_dir'] = f"tmp_logs/{row['id']}/"
 
-                    counter += 1
-                    if counter % args.max_jobs == 0: 
-                        dir_counter += 1
-                        if args.shell !="": generate_shell(args, f'{args.dir}{dir_counter}', dir_counter)
-                    if not os.path.exists(f'{args.dir}{dir_counter}'):
-                        os.makedirs(f'{args.dir}{dir_counter}')
+                        counter += 1
+                        if counter % args.max_jobs == 0: 
+                            dir_counter += 1
+                            if args.shell !="": generate_shell(args, f'{args.dir}{dir_counter}', dir_counter)
+                        if not os.path.exists(f'{args.dir}{dir_counter}'):
+                            os.makedirs(f'{args.dir}{dir_counter}')
 
-                    # with open(f'{args.dir}/{row["id"]}.txt', 'w') as f:
-                    with open(f'{args.dir}{dir_counter}/{row["id"]}.txt', 'w') as f:
-                        f.write(str(new_config))
+                        # with open(f'{args.dir}/{row["id"]}.txt', 'w') as f:
+                        with open(f'{args.dir}{dir_counter}/{row["id"]}.txt', 'w') as f:
+                            f.write(str(new_config))
 
     if args.shell !="": generate_shell(args, f'{args.dir}{dir_counter}', dir_counter)
 
