@@ -74,12 +74,20 @@ def get_exp_ids():
     ]
     return exp_ids
 
-def exp_cluster(name_sh = "/tmp_sh/aemg.sh"):
+def exp_cluster(name_sh = "/run/aemg.sh"):
     name_sh = os.getcwd() + name_sh
 
     with open(name_sh, "r") as reader:
         halfs = reader.read().split("# split_here #")
     return halfs[0], halfs[1]
+
+def exp_cluster_array(name_sh = "/run/aemg_array.sh"):
+    name_sh = os.getcwd() + name_sh
+
+    with open(name_sh, "r") as reader:
+        lines = reader.readlines()
+        lines.pop(1)
+    return lines
 
 def generate_shell(args, path_config, dir_counter):
     save_folder = os.path.join(os.getcwd(),f"tmp_sh_{args.name}")
@@ -98,12 +106,20 @@ def generate_shell(args, path_config, dir_counter):
 
         file.write(halfs_1)
 
+def generate_job_array(args, path_config, dir_counter):
+    save_folder = os.path.join(os.getcwd(),f"tmp_sh_{args.name}")
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
 
+    lines = exp_cluster_array()
 
+    shell_name = f"{save_folder}/{args.shell}{dir_counter}.sh"
+    with open(shell_name, "w") as file:
+        file.write(lines[0])
+        file.write(f"#SBATCH --array=1-{dir_counter}")
 
-    
-
-
+        for line in lines[1::]:
+            file.write(line)
 
 if __name__ == "__main__":
 
