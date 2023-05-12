@@ -119,6 +119,12 @@ def generate_job_array(args, path_config, dir_counter):
         file.write(f"#SBATCH --array=0-{dir_counter}\n")
 
         for line in lines[1::]:
+            
+            if line[0:11] == "search_dir=":
+                write_path = f"\nsearch_dir={path_config}$SLURM_ARRAY_TASK_ID/\n"
+                file.write(write_path)
+                continue
+
             file.write(line)
 
 if __name__ == "__main__":
@@ -129,6 +135,10 @@ if __name__ == "__main__":
     parser.add_argument('--name', help='Name of the experiment', type=str,required=True)
     parser.add_argument('--max_jobs',help='Split into multiple files',type=int,default=100)
     parser.add_argument('--shell',help='Generate shell script to send job',type=str,default="")
+    parser.add_argument('--seed', help='Select the number of experiments', type=int, default=10)
+    parser.add_argument('--num_layers', help='Select the number of layers', type=int, default=1)
+    parser.add_argument('--data_size', help='Select the data size ', type=int, default=1)
+
 
     args = parser.parse_args()
 
@@ -153,16 +163,13 @@ if __name__ == "__main__":
     all_exps = []
 
     # Possible values for seed
-    seeds = list(range(0, 10))
-    # seeds = list(range(0, 1000))
+    seeds = list(range(0, args.seed))
     # Possible values for the experiment
-    
     exp_ids = get_exp_ids()
     # Possible values for the number of layers
-    num_layers = [1, 2]
+    num_layers = list(range(1, args.num_layers + 1))
     # Possible values for the data size (in k)
-    # data_size = [1, 10, 100]
-    data_size = [1]
+    data_size = [10**i for i in range(args.data_size)]
 
     # Possible values for steps
     steps = [1, 3, 6]
@@ -207,7 +214,7 @@ if __name__ == "__main__":
                             f.write(str(new_config))
 
     print(dir_counter)
-    if args.shell !="": generate_job_array(args, f'{args.dir}{dir_counter}', dir_counter)
+    if args.shell !="": generate_job_array(args, f'{args.dir}', dir_counter)
 
     output = os.getcwd() + "/tmp_all_exps"
     if not os.path.exists(output):
