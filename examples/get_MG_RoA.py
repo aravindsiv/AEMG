@@ -81,7 +81,7 @@ def main():
     MG_util = CMGDB_util.CMGDB_util()
 
     sb = args.sub
-    number_of_steps = np.ceil(6 / config['step'])  # at least 0.6 seconds in total
+    number_of_steps = np.ceil(12 / config['step'])  # at least 0.6 seconds in total
     if config['system'] == "discrete_map":
         number_of_steps = 1
     uniform_sample = True
