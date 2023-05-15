@@ -134,7 +134,7 @@ def main():
 
 
     # base name for the output files.
-    base_name = f"{config['data_dir'][5::]}/{args.name_out}"
+    base_name = f"{config['output__dir']}/{args.name_out}"
     
     
     print(base_name)
