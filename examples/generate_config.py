@@ -1,5 +1,6 @@
 import os
 import argparse 
+import uuid
 from tqdm import tqdm
 
 def get_exp_ids(num_design):
@@ -151,15 +152,7 @@ if __name__ == "__main__":
     if not os.path.exists(args.dir):
         os.makedirs(args.dir)
 
-    uuid_generator = None
-    # try:
-    #     import libpyDirtMP as prx
-    #     uuid_generator = prx.generate_uuid()
-    # except:
-    if True:
-        print("Using python uuid generator")
-        import uuid
-        uuid_generator = uuid.uuid4
+    uuid_generator = uuid.uuid4
 
     all_exps = []
 
@@ -201,6 +194,7 @@ if __name__ == "__main__":
                         new_config['data_dir'] = f"data/{new_config['system']}_{new_config['control']}{ds}k"
                         new_config['model_dir'] = f"tmp_models/{row['id']}/"
                         new_config['log_dir'] = f"tmp_logs/{row['id']}/"
+                        new_config['output_dir'] = f"output/{row['id']}/"
                         new_config["step"] = step
 
                         counter += 1

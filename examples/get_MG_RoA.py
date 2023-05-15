@@ -18,13 +18,12 @@ import os
 
 import numpy as np
 
-def write_experiments(morse_graph, experiment_name, name_folder, name="out_exp"):
+def write_experiments(morse_graph, experiment_name, output_dir, name="out_exp"):
 
-    new_out_dir = 'output/' + name_folder
-    if not os.path.exists(new_out_dir):
-        os.makedirs(new_out_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    name = f"{new_out_dir}/{name}"
+    name = f"{output_dir}/{name}"
 
     with open(name, "w") as file:
         file.write(experiment_name)
@@ -66,7 +65,7 @@ def main():
     parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
     parser.add_argument('--config',help='Config file inside config_dir',type=str,default='discrete_map.txt')
     parser.add_argument('--name_out',help='Name of the out file',type=str,default='out_exp')
-    parser.add_argument('--RoA',help='Compute RoA',type=str,default='')
+    parser.add_argument('--RoA',help='Compute RoA',action='store_true')
     parser.add_argument('--sub',help='Select subdivision',type=int,default=14)
 
 
@@ -147,7 +146,7 @@ def main():
 
     experiment_name = f"{config['experiment']}&{config['num_layers']}&{config['data_dir'][5::]}&{config['step']}&{args.sub}"
     
-    write_experiments(morse_graph, experiment_name, config['data_dir'][5::], args.name_out)
+    write_experiments(morse_graph, experiment_name, config['output_dir'], args.name_out)
 
     if args.RoA:
      

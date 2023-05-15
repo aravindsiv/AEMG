@@ -30,10 +30,11 @@ class DynamicsUtils:
         z = torch.tensor(z, dtype=torch.float32)
         return self.dynamics(z).detach().numpy()
 
-    def encode(self, x):
+    def encode(self, x, normalize=True):
         # This function takes as input a raw state (un-normalized)
         # and returns the latent state
-        x = (x - self.X_min) / (self.X_max - self.X_min)
+        if normalize:
+            x = (x - self.X_min) / (self.X_max - self.X_min)
         x = torch.tensor(x, dtype=torch.float32)
         return self.encoder(x).detach().numpy()
 
