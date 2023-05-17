@@ -18,7 +18,7 @@ import os
 
 import numpy as np
 
-def write_experiments(morse_graph, experiment_name, output_dir, name="out_exp"):
+def write_experiments(morse_graph, experiment_name, output_dir, name="MG_attractors.txt"):
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -41,7 +41,7 @@ def write_experiments(morse_graph, experiment_name, output_dir, name="out_exp"):
         file.write(f":{list_attractors},{counting_attractors}\n")
 
 
-def compute_roa(map_graph, morse_graph, base_name):
+def compute_roa(map_graph, morse_graph, lower_bounds, upper_bounds, config, base_name):
 
     startTime = datetime.now()
 
@@ -49,15 +49,24 @@ def compute_roa(map_graph, morse_graph, base_name):
 
     print(f"Time to build the regions of attraction = {datetime.now() - startTime}")
 
+    roa.dir_path = ""
+
     roa.save_file(base_name)
 
-    fig, ax = roa.PlotTiles(name_plot=base_name)
+    if config['low_dims'] == 2:
 
-    # RoA.PlotTiles(lower_bounds, upper_bounds,
-    #               from_file=base_name, from_file_basic=True)
+        # fig, ax = roa.PlotTiles(name_plot=base_name)
 
-    # plt.savefig(base_name, bbox_inches='tight')
-    plt.show()
+        # plt.savefig(base_name, bbox_inches='tight')
+
+        dir_path = os.path.abspath(os.getcwd()) + "/"
+
+        fig, ax = RoA.PlotTiles(lower_bounds, upper_bounds,
+                    from_file=base_name, dir_path=dir_path)
+
+        out_pic = roa.dir_path + base_name + "_RoA_"
+
+        plt.savefig(out_pic, bbox_inches='tight')
 
 def main():
 
@@ -134,10 +143,15 @@ def main():
 
 
     # base name for the output files.
-    base_name = f"{config['output__dir']}/{args.name_out}"
+    base_name = f"{config['output_dir']}/{args.name_out}"
     
     
     print(base_name)
+
+    base_name = f"{config['output_dir']}/MG"
+
+    MG_util.dir_path = ""
+    
     morse_graph, map_graph = MG_util.run_CMGDB(
         subdiv_min, subdiv_max, lower_bounds, upper_bounds, phase_periodic, F, base_name, subdiv_init)
 
@@ -146,11 +160,11 @@ def main():
 
     experiment_name = f"{config['experiment']}&{config['num_layers']}&{config['data_dir'][5::]}&{config['step']}&{args.sub}"
     
-    write_experiments(morse_graph, experiment_name, config['output_dir'], args.name_out)
+    write_experiments(morse_graph, experiment_name, config['output_dir'])
 
     if args.RoA:
      
-     compute_roa(map_graph, morse_graph, base_name)
+        compute_roa(map_graph, morse_graph, lower_bounds, upper_bounds, config, base_name)
 
 if __name__ == "__main__":
     main()

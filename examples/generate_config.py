@@ -140,7 +140,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_layers', help='Select the number of layers', type=int, default=1)
     parser.add_argument('--data_size', help='Select the data size ', type=int, default=1)
     parser.add_argument('--num_design', help='Select the number of designs', type=int, default=3)
-
+    parser.add_argument('--num_steps', help='Select the number of steps', type=int, default=1)
 
     args = parser.parse_args()
 
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     data_size = [10**i for i in range(args.data_size)]
 
     # Possible values for steps
-    steps = [1, 3, 6, 12]
+    steps = [1, 3, 6, 12][0:args.num_steps]
 
     counter = 0
     dir_counter = 0
@@ -191,14 +191,16 @@ if __name__ == "__main__":
                         new_config['seed'] = seed
                         new_config['experiment'] = exp
                         new_config['num_layers'] = nl
-                        new_config['data_dir'] = f"data/{new_config['system']}_{new_config['control']}{ds}k"
-                        new_config['model_dir'] = f"tmp_models/{row['id']}/"
-                        new_config['log_dir'] = f"tmp_logs/{row['id']}/"
-                        new_config['output_dir'] = f"output/{row['id']}/"
+                        system_control_data_temp = f"{new_config['system']}_{new_config['control']}{ds}k"
+                        new_config['data_dir'] = f"data/{system_control_data_temp}"
+                        output_temp = f"output/{system_control_data_temp}/{row['id']}/"
+                        new_config['output_dir'] = output_temp
+                        new_config['model_dir'] = f"{output_temp}/model/"
+                        new_config['log_dir'] = f"{output_temp}/logs/"
                         new_config["step"] = step
 
                         counter += 1
-                        if counter % args.max_jobs == 0: 
+                        if counter % args.max_jobs == 0 and counter != 1: 
                             dir_counter += 1
                             # if args.shell !="": generate_shell(args, f'{args.dir}{dir_counter}', dir_counter)
                         if not os.path.exists(f'{args.dir}{dir_counter}'):

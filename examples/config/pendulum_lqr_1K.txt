@@ -9,7 +9,11 @@
     'patience': 50,
     'batch_size': 1024,
     'learning_rate': 0.001,
-    'data_dir': 'data/pendulum_lqr_2.0/',
+    'data_dir': 'data/pendulum_lqr_1K/',
     'model_dir': 'models/pendulum_lqr_1K/',
-    'log_dir': 'logs/pendulum_lqr_1K/',
+    'log_dir': 'logs/',
+    'num_layers': 1,
+    'seed': 0,
+    'experiment': '500x1x1',
+    'output_dir': 'output/pendulum_lqr1k/'
 }
