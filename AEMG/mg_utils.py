@@ -8,14 +8,15 @@ import os
 
 class MorseGraphOutputProcessor:
     def __init__(self, config):
-        mg_fname = os.path.join(config['out_dir'], 'mg_output.csv')
-        
+        mg_roa_fname = os.path.join(config['output_dir'], 'MG_RoA_.csv')
+        mg_att_fname = os.path.join(config['output_dir'], 'MG_attractors.txt')
+
         self.dims = config['low_dims']
 
         # Check if the file exists
-        if not os.path.exists(mg_fname):
-            raise FileNotFoundError("Morse Graph output file does not exist")
-        with open(mg_fname, 'r') as f:
+        if not os.path.exists(mg_roa_fname):
+            raise FileNotFoundError("Morse Graph RoA file does not exist")
+        with open(mg_roa_fname, 'r') as f:
             lines = f.readlines()
             # Find indices where the first character is an alphabet
             self.indices = []
@@ -28,6 +29,17 @@ class MorseGraphOutputProcessor:
 
         self.morse_nodes = np.unique(self.morse_nodes_data[:, 1])
         self.attractor_nodes = np.unique(self.attractor_nodes_data[:, 1])
+
+        if not os.path.exists(mg_att_fname):
+            raise FileNotFoundError("Morse Graph attractors file does not exist")
+        self.found_attractors = -1
+        with open(mg_att_fname, 'r') as f:
+            line = f.readline()
+            # Obtain the last number after a comma
+            self.found_attractors = int(line.split(",")[-1])
+    
+    def get_num_attractors(self):
+        return self.found_attractors
     
     def get_corner_points_of_attractor(self, id):
         # Get the attractor nodes
