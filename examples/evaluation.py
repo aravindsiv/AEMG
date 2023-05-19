@@ -1,4 +1,3 @@
-
 from AEMG.mg_utils import *
 from AEMG.data_utils import *
 from AEMG.dynamics_utils import *
@@ -24,18 +23,20 @@ print("# of attractors for the learned system: ", mg_out_utils.get_num_attractor
 GT_ATTRACTOR = dynamics.system.transform(np.array([0.0, 0.0]))
 gt_att_enc = dynamics.encode(GT_ATTRACTOR)
 
-min_dist = np.inf 
-identified_attractor = -1
+attractor_min_distances = []
 for i in range(mg_out_utils.get_num_attractors()):
     attractor_tiles = mg_out_utils.get_corner_points_of_attractor(i)
+    min_dist = np.inf 
     for j in range(attractor_tiles.shape[0]):
         cp_low = attractor_tiles[j, :config['low_dims']]
         cp_high = attractor_tiles[j, config['low_dims']:]
         tile_center = (cp_low + cp_high) / 2.0
-        if np.linalg.norm(tile_center - gt_att_enc) < min_dist:
-            min_dist = np.linalg.norm(tile_center - gt_att_enc)
-            identified_attractor = i
+        min_dist = min(min_dist, np.linalg.norm(tile_center - gt_att_enc))
+    attractor_min_distances.append(min_dist)
 
+print(attractor_min_distances)
+identified_attractor = np.argmin(attractor_min_distances)
+min_dist = attractor_min_distances[identified_attractor]
 print("Identified attractor: ", identified_attractor, " with distance: ", min_dist)
 
 def is_gt_roa(pt):
