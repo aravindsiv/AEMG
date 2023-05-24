@@ -15,7 +15,7 @@ class DiscreteMap(BaseSystem):
         return s
     
     def get_true_bounds(self):
-        return [-2,-2,2,2]
+        return np.array([[-2,-2],[2,2]])
     
     def get_bounds(self):
         return NotImplementedError

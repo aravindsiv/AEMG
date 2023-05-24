@@ -48,12 +48,12 @@ class NdPendulum(BaseSystem):
         for i in range(self.centers.shape[0]):
             pt[i] = np.exp(-np.linalg.norm(s-self.centers[i])**2)
         return pt
-    
+
     def inverse_transform(self,s):
         return s
     
     def get_true_bounds(self):
-        return [-np.pi, -2*np.pi, np.pi, 2*np.pi]
+        return np.array([[-np.pi, np.pi], [-2*np.pi, 2*np.pi]])
     
     def get_bounds(self):
         return NotImplementedError

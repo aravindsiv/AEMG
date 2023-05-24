@@ -53,8 +53,8 @@ if __name__ == "__main__":
 
     dim = len(true_bounds) // 2
 
-    lower_bounds = true_bounds[0:dim]
-    upper_bounds = true_bounds[dim::]
+    lower_bounds = true_bounds[0]
+    upper_bounds = true_bounds[1]
 
 
     if args.sample:
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     else:
         X = grid_points(lower_bounds, upper_bounds, num_trajs)
 
-    if args.system == "ndpendulum":
+    if args.system == "pendulum" or args.system == "ndpendulum":
 
         TM = TimeMap.TimeMap("pendulum_lc", args.time_step,
                                 "examples/tripods/pendulum_lc.yaml")
