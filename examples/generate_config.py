@@ -168,6 +168,11 @@ if __name__ == "__main__":
     # Possible values for steps
     steps = [1, 3, 6, 12][0:args.num_steps]
 
+    # # Output all files here
+    # output = f'{os.getcwd()}/output/{args.name}'
+    # if not os.path.exists(output):
+    #     os.makedirs(output)
+
     counter = 0
     dir_counter = 0
     for exp in tqdm(exp_ids):
@@ -195,29 +200,33 @@ if __name__ == "__main__":
                         new_config['data_dir'] = f"data/{system_control_data_temp}"
                         output_temp = f"output/{system_control_data_temp}/{row['id']}/"
                         new_config['output_dir'] = output_temp
-                        new_config['model_dir'] = f"{output_temp}/model/"
-                        new_config['log_dir'] = f"{output_temp}/logs/"
+                        new_config['model_dir'] = f"{output_temp}model/"
+                        new_config['log_dir'] = f"{output_temp}logs/"
                         new_config["step"] = step
 
                         counter += 1
                         if counter % args.max_jobs == 0 and counter != 1: 
                             dir_counter += 1
                             # if args.shell !="": generate_shell(args, f'{args.dir}{dir_counter}', dir_counter)
+                        
+                        # save temp config to run experiments
                         if not os.path.exists(f'{args.dir}{dir_counter}'):
                             os.makedirs(f'{args.dir}{dir_counter}')
-
                         # with open(f'{args.dir}/{row["id"]}.txt', 'w') as f:
                         with open(f'{args.dir}{dir_counter}/{row["id"]}.txt', 'w') as f:
                             f.write(str(new_config))
 
+                        # save config for future references
+                        if not os.path.exists(output_temp):
+                            os.makedirs(output_temp)
+                        with open(f'{output_temp}/config.txt', 'w') as f:
+                            f.write(str(new_config))
     print(dir_counter)
     if args.shell !="": generate_job_array(args, f'{args.dir}', dir_counter)
 
-    output = os.getcwd() + "/tmp_all_exps"
-    if not os.path.exists(output):
-        os.makedirs(output)
+
     
-    with open(f'{output}/{args.name}_all_exps.txt', 'w') as f:
+    with open(f'output/{system_control_data_temp}/all_exps.txt', 'w') as f:
         # Write as follows: <id>: <>,...
         for row in all_exps:
             f.write(f'{row["id"]}:')
