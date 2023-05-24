@@ -21,6 +21,18 @@ def sample_points(lower_bounds, upper_bounds, num_pts):
     X = np.random.uniform(lower_bounds, upper_bounds, size=(num_pts, dim))
     return X
 
+def grid_points(lower_bounds, upper_bounds, num_pts):
+    # Returns a grid of initial conditions,
+    assert(len(lower_bounds) == 2, "Currently, grid points only works for dimensionality 2!")
+    X = []
+    num = int(np.sqrt(num_pts))
+    dim1 = np.linspace(lower_bounds[0],upper_bounds[0],num)
+    dim2 = np.linspace(lower_bounds[1],upper_bounds[1],num)
+    for i in range(dim1.shape[0]):
+        for j in range(dim2.shape[0]):
+            X.append([dim1[i],dim2[j]])
+    return np.vstack(X)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--time', help='Trajectory length', type=float, default=1.0)
@@ -28,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_trajs', help='Number of trajectories', type=int, default=10)
     parser.add_argument('--save_dir', help='Save directory', type=str, default='/data/discrete_map')
     parser.add_argument('--system', help='Select the system', type=str, default='discrete_map')
+    parser.add_argument('--sample', help='Samples initial conditions instead of on a grid')
 
     args = parser.parse_args()
     
@@ -44,7 +57,10 @@ if __name__ == "__main__":
     upper_bounds = true_bounds[dim::]
 
 
-    X = sample_points(lower_bounds, upper_bounds, num_trajs)
+    if args.sample:
+        X = sample_points(lower_bounds, upper_bounds, num_trajs)
+    else:
+        X = grid_points(lower_bounds, upper_bounds, num_trajs)
 
     if args.system == "ndpendulum":
 
