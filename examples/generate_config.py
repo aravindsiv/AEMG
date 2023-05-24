@@ -212,7 +212,7 @@ if __name__ == "__main__":
                         # save temp config to run experiments
                         if not os.path.exists(f'{args.dir}{dir_counter}'):
                             os.makedirs(f'{args.dir}{dir_counter}')
-                        # with open(f'{args.dir}/{row["id"]}.txt', 'w') as f:
+                        
                         with open(f'{args.dir}{dir_counter}/{row["id"]}.txt', 'w') as f:
                             f.write(str(new_config))
 
