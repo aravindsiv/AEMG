@@ -7,6 +7,12 @@ class Cartpole(BaseSystem):
         super().__init__(**kwargs)
         self.name = "cartpole"
     
+    def transform(self,x):
+        return np.array([x[0],np.cos(x[1]),np.sin(x[1]),x[2],x[3]])
+
+    def inverse_transform(self,x):
+        return np.array([x[0],np.arctan2(x[1],x[0]),x[2],x[3]])
+    
     def achieved_goal(self,s):
         diff = np.sqrt(s[1]*s[1] + s[3]*s[3])
         return (diff < 0.1)
