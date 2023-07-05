@@ -2,7 +2,7 @@
     'system': 'cartpole',
     'control': 'lqr',
     'use_limits': False,
-    'high_dims': 4,
+    'high_dims': 5,
     'low_dims': 2,
     'step': 50,
     'epochs': 500,
