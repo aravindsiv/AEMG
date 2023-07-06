@@ -54,7 +54,7 @@ if __name__ == "__main__":
                 z_curr = z_next
             ax2.scatter(z_curr[0], z_curr[1], color='g', marker='x')
 
-        plt.savefig(os.path.join(args.output_dir, "trajectories.png"))
+        plt.savefig(os.path.join(args.output_dir, args.id + "_trajectories.png"))
         plt.close()
     
     if args.mode == "field" or args.mode == "all":
@@ -75,4 +75,4 @@ if __name__ == "__main__":
             predicted_end = dynamics.f(encoded_start)
             ax2.arrow(encoded_start[0], encoded_start[1], predicted_end[0]-encoded_start[0], predicted_end[1]-encoded_start[1], color='black', head_width=1e-2)
 
-        plt.savefig(os.path.join(args.output_dir, "field.png"))
+        plt.savefig(os.path.join(args.output_dir, args.id + "_field.png"))
