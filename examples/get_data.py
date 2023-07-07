@@ -35,12 +35,12 @@ def grid_points(lower_bounds, upper_bounds, num_pts):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--time', help='Trajectory length', type=float, default=1.0)
+    parser.add_argument('--time', help='Trajectory length', type=float, default=0.5)
     parser.add_argument('--time_step', help='Time step', type=float, default=0.1)
-    parser.add_argument('--num_trajs', help='Number of trajectories', type=int, default=10)
-    parser.add_argument('--save_dir', help='Save directory', type=str, default='/data/discrete_map')
-    parser.add_argument('--system', help='Select the system', type=str, default='discrete_map')
-    parser.add_argument('--sample', help='Samples initial conditions instead of on a grid')
+    parser.add_argument('--num_trajs', help='Number of trajectories', type=int, default=1000)
+    parser.add_argument('--save_dir', help='Save directory', type=str, default='/data/bistable')
+    parser.add_argument('--system', help='Select the system', type=str, default='bistable')
+    parser.add_argument('--sample', help='Samples initial conditions instead of on a grid', type=str, default='random')
 
     args = parser.parse_args()
     
@@ -53,13 +53,14 @@ if __name__ == "__main__":
 
     dim = len(true_bounds) // 2
 
-    lower_bounds = true_bounds[0]
-    upper_bounds = true_bounds[1]
 
-
-    if args.sample:
+    if args.sample == 'random':
+        lower_bounds = true_bounds[:,0]
+        upper_bounds = true_bounds[:,1]
         X = sample_points(lower_bounds, upper_bounds, num_trajs)
     else:
+        lower_bounds = true_bounds[0]
+        upper_bounds = true_bounds[1]
         X = grid_points(lower_bounds, upper_bounds, num_trajs)
 
     if args.system == "pendulum" or args.system == "ndpendulum":
@@ -68,7 +69,7 @@ if __name__ == "__main__":
                                 "examples/tripods/pendulum_lc.yaml")
         f = TM.pendulum_lqr
 
-    elif args.system == "discrete_map":
+    else:
         f = system.f
 
 

@@ -28,15 +28,15 @@ def write_experiments(morse_graph, experiment_name, output_dir, name="MG_attract
     with open(name, "w") as file:
         file.write(experiment_name)
 
-        S = set(morse_graph.vertices())
-
         counting_attractors = 0
         list_attractors = []
-        while len(S) != 0:
-            v = S.pop()
-            if len(morse_graph.adjacencies(v)) == 0:
-                counting_attractors += 1
-                list_attractors.append(v)
+        if morse_graph:
+            S = set(morse_graph.vertices())
+            while len(S) != 0:
+                v = S.pop()
+                if len(morse_graph.adjacencies(v)) == 0:
+                    counting_attractors += 1
+                    list_attractors.append(v)
 
         file.write(f":{list_attractors},{counting_attractors}\n")
 
@@ -68,21 +68,7 @@ def compute_roa(map_graph, morse_graph, lower_bounds, upper_bounds, config, base
 
         plt.savefig(out_pic, bbox_inches='tight')
 
-def main():
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
-    parser.add_argument('--config',help='Config file inside config_dir',type=str,default='discrete_map.txt')
-    parser.add_argument('--name_out',help='Name of the out file',type=str,default='out_exp')
-    parser.add_argument('--RoA',help='Compute RoA',action='store_true')
-    parser.add_argument('--sub',help='Select subdivision',type=int,default=14)
-
-
-    args = parser.parse_args()
-    config_fname = args.config_dir + args.config
-
-    with open(config_fname) as f:
-        config = eval(f.read())
+def main(args, config, experiment_name):
 
     dyn_utils = DynamicsUtils(config)
 
@@ -156,10 +142,6 @@ def main():
         subdiv_min, subdiv_max, lower_bounds, upper_bounds, phase_periodic, F, base_name, subdiv_init)
 
 
-   
-
-    experiment_name = f"{config['experiment']}&{config['num_layers']}&{config['data_dir'][5::]}&{config['step']}&{args.sub}"
-    
     write_experiments(morse_graph, experiment_name, config['output_dir'])
 
     if args.RoA:
@@ -167,4 +149,24 @@ def main():
         compute_roa(map_graph, morse_graph, lower_bounds, upper_bounds, config, base_name)
 
 if __name__ == "__main__":
-    main()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
+    parser.add_argument('--config',help='Config file inside config_dir',type=str,default='discrete_map.txt')
+    parser.add_argument('--name_out',help='Name of the out file',type=str,default='out_exp')
+    parser.add_argument('--RoA',help='Compute RoA',action='store_true')
+    parser.add_argument('--sub',help='Select subdivision',type=int,default=14)
+
+
+    args = parser.parse_args()
+    config_fname = args.config_dir + args.config
+
+    with open(config_fname) as f:
+        config = eval(f.read())
+
+    experiment_name = f"{config['experiment']}&{config['num_layers']}&{config['data_dir'][5::]}&{config['step']}&{args.sub}"
+
+    if os.path.exists(config['model_dir']):
+        main(args, config, experiment_name)
+    else:
+        write_experiments(False, experiment_name, config['output_dir'])

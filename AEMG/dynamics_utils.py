@@ -11,6 +11,9 @@ class DynamicsUtils:
     def __init__(self, config):
         self.system = get_system(config['system'])
 
+        assert os.path.exists(config['model_dir']), "model expected"
+                            
+
         if config["use_limits"]:
             raise NotImplementedError
         else:
