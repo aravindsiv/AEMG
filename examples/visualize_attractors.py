@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_dir', type=str, default="output/pendulum_lqr1k")
     parser.add_argument('--id', type=str, required=True)
-    parser.add_argument('--output_dir',type=str, default=os.environ['HOME'] + "/Desktop")
+    parser.add_argument('--output_dir',type=str, default="")
     args = parser.parse_args()
 
     config_fname = os.path.join(args.config_dir, args.id, "config.txt")
@@ -27,6 +27,8 @@ if __name__ == "__main__":
     attractors = None
     if config['system'] == 'pendulum':
         attractors = np.array([[-2.1, 0.0], [0.0, 0.0], [2.1, 0.0]])
+    elif config['system'] == 'bistable':
+        attractors = np.array([[-1/3, 0.0], [1/3, 0.0]])
     else:
         raise NotImplementedError
 
@@ -35,7 +37,27 @@ if __name__ == "__main__":
     except FileNotFoundError or ValueError:
         exit(0)
 
-    plt.figure(figsize=(8,8))
+    # setting the size of the plot
+    fig_w=8
+    fig_h=8
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+    lower_bounds = [-1,-1]
+    upper_bounds = [1,1]
+    d1=0
+    d2=1
+    fontsize=16
+    tick=5
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    ax.set_xlim([lower_bounds[d1], upper_bounds[d1]])
+    ax.set_ylim([lower_bounds[d2], upper_bounds[d2]])
+    plt.xticks(np.linspace(lower_bounds[d1], upper_bounds[d1], tick))
+    plt.yticks(np.linspace(lower_bounds[d2], upper_bounds[d2], tick))
+    ax.set_xlabel(str(d1))
+    ax.set_ylabel(str(d2))
+    ax.xaxis.label.set_size(fontsize)
+    ax.yaxis.label.set_size(fontsize)
+
     for i in range(len(attractors)):
         attractor = attractors[i]
         xt = dynamics.system.transform(attractor)
@@ -50,5 +72,9 @@ if __name__ == "__main__":
             tile_center = (cp_low + cp_high) / 2.0
             plt.scatter(tile_center[0], tile_center[1], color='b', s = 100./attractor_tiles.shape[0], marker='.',label='MG Attractor' if i==0 and j==0 else None)
     
-    plt.legend(loc='best')
-    plt.savefig(os.path.join(args.output_dir, args.id + "_attractors.png"))
+    # plt.legend(loc='best')
+    
+    if args.output_dir:
+        plt.savefig(os.path.join(args.output_dir, "attractors.png"))
+    else:
+        plt.savefig(os.path.join(config['output_dir'], "attractors.png"))
