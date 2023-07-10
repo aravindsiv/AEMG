@@ -79,7 +79,7 @@ if __name__ == "__main__":
             predicted_end = dynamics.f(encoded_start)
             ax2.arrow(encoded_start[0], encoded_start[1], predicted_end[0]-encoded_start[0], predicted_end[1]-encoded_start[1], color='black', head_width=1e-2)
 
-        if args.output_dir:
+        if args.output_dir != "":
             plt.savefig(os.path.join(args.output_dir, args.id + "_field.png"))
         else:
             plt.savefig(os.path.join(config['output_dir'], "field.png"))
