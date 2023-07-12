@@ -16,12 +16,16 @@ class DynamicsDataset(Dataset):
         Xnext = []
 
         step = config['step']
+        subsample = config['subsample']
         system = get_system(config['system'], config['high_dims'])
         print("Getting data for: ",system.name)
 
         for f in tqdm(os.listdir(config['data_dir'])):
             data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
-            for i in range(data.shape[0] - step):
+            indices = np.arange(data.shape[0])
+            subsampled_indices = indices % subsample == 0
+            subsampled_data = data[subsampled_indices]
+            for i in range(subsampled_data.shape[0] - step):
                 Xt.append(system.transform(data[i]))
                 Xnext.append(system.transform(data[i + step]))
             
