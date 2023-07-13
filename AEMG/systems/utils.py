@@ -9,8 +9,6 @@ def get_system(name, dims=10, **kwargs):
         system = Pendulum(**kwargs)
     elif name == "ndpendulum" and dims is not None:
         system = NdPendulum(dims, **kwargs)
-    elif name == "hopper":
-        system = Hopper(**kwargs)
     elif name == "cartpole":
         system = Cartpole(**kwargs)
     elif name == "bistable":

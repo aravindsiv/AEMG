@@ -7,5 +7,5 @@ AEMG.egg-info/
 tmp*/
 examples/test.py
 output/
-*models/
+models/
 .vscode/launch.json
