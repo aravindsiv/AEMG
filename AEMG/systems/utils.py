@@ -1,6 +1,5 @@
 from AEMG.systems.pendulum import Pendulum
 from AEMG.systems.ndpendulum import NdPendulum
-from AEMG.systems.hopper import Hopper
 from AEMG.systems.cartpole import Cartpole
 from AEMG.systems.bistable import Bistable
 from AEMG.systems.N_CML import N_CML
@@ -11,8 +10,6 @@ def get_system(name, dims=10, **kwargs):
         system = Pendulum(**kwargs)
     elif name == "ndpendulum" and dims is not None:
         system = NdPendulum(dims, **kwargs)
-    elif name == "hopper":
-        system = Hopper(**kwargs)
     elif name == "cartpole":
         system = Cartpole(**kwargs)
     elif name == "bistable":
