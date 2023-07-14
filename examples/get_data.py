@@ -23,7 +23,7 @@ def sample_points(lower_bounds, upper_bounds, num_pts):
 
 def grid_points(lower_bounds, upper_bounds, num_pts):
     # Returns a grid of initial conditions,
-    assert(len(lower_bounds) == 2, "Currently, grid points only works for dimensionality 2!")
+    assert len(lower_bounds) == 2, "Currently, grid points only works for dimensionality 2!"
     X = []
     num = int(np.sqrt(num_pts))
     dim1 = np.linspace(lower_bounds[0],upper_bounds[0],num)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     dim = len(true_bounds) // 2
 
-
+    
     if args.sample == 'random':
         lower_bounds = true_bounds[:,0]
         upper_bounds = true_bounds[:,1]
@@ -92,6 +92,6 @@ if __name__ == "__main__":
             traj.append(state_temp)
             # traj.append(system.transform(state_temp))
         
-        traj = np.array(traj) 
+        traj = np.array(traj)
         np.savetxt(f"{save_dir}/{counter}.txt",traj,delimiter=",")
         counter += 1 

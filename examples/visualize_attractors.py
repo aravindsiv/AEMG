@@ -29,7 +29,7 @@ if __name__ == "__main__":
     if config['system'] == 'pendulum':
         attractors = np.array([[-2.1, 0.0], [0.0, 0.0], [2.1, 0.0]])
     elif config['system'] == 'bistable':
-        attractors = np.array([[-1/3, 0.0], [1/3, 0.0]])
+        attractors = np.array([[-1.39]+[0.0]*9, [1.39]+[0.0]*9])
     else:
         raise NotImplementedError
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     
     # plt.legend(loc='best')
     
-    if args.output_dir != "":
+    if args.output_dir:
         plt.savefig(os.path.join(args.output_dir, "attractors.png"))
     else:
         plt.savefig(os.path.join(config['output_dir'], "attractors.png"))

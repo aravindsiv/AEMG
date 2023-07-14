@@ -19,7 +19,7 @@ def check_collapse(encoder, dataset):
 
     epsilon = 0.05
     epsilon = np.power(epsilon, 1/dim_low)
-    distance = 0.5
+    distance = 1.5
 
     test_freq = int(min(10000, (len(dataset)-dim_low)/dim_low))
 
@@ -29,15 +29,18 @@ def check_collapse(encoder, dataset):
         matrix3 = np.array([encoder(dataset[i + test_index * dim_low][0]).detach().numpy() for i in range(dim_low+1)])        
         a = scipy.spatial.distance_matrix(matrix3, matrix3)
         ind = np.unravel_index(np.argmax(a, axis=None), a.shape)
+        b = np.where(a == 0, 4, a)
+        ind2 = np.unravel_index(np.argmin(b, axis=None), b.shape)
 
-        if a[ind] < distance and a[ind] != 1:
+        # check only points in annulus (inner and outter radius) = (epsilon, distance).
+        if all([b[ind2] > epsilon, a[ind] < distance]):  
+            
             matrix = [encoder(dataset[i + test_index * dim_low][0]).detach().numpy() - encoder(dataset[dim_low+1 + test_index * dim_low][0]).detach().numpy() for i in range(dim_low)]
-            # matrix = np.array(matrix)
-            print(a[ind],"\n", np.linalg.det(matrix)**2,"\n", matrix)
+            # print(b[ind2], "\n", a[ind],"\n", np.linalg.det(matrix)**2,"\n", matrix)
             if np.linalg.det(matrix)**2 > epsilon**2:
                 return False
             
-    print("\033[91m Collapse")
+    print("\033[91m Collapse\033[00m")
     return True
 
 def main():
