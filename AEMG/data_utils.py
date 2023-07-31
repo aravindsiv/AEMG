@@ -65,16 +65,21 @@ class TrajectoryDataset:
     # Useful for plotting
     def __init__(self, config):
         self.trajs = []
+        subsample = config['subsample']
 
         system = get_system(config['system'], config['high_dims'])
         print("Getting data for: ",system.name)
 
         for f in tqdm(os.listdir(config['data_dir'])):
             raw_data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
+            if len(raw_data) == 0: continue
+            indices = np.arange(raw_data.shape[0])
+            subsampled_indices = indices % subsample == 0
+            subsampled_data = raw_data[subsampled_indices]
             # Transform each state in the trajectory
             data = []
-            for i in range(raw_data.shape[0]):
-                data.append(system.transform(raw_data[i]))
+            for i in range(subsampled_data.shape[0]):
+                data.append(system.transform(subsampled_data[i]))
             data = np.array(data)
             self.trajs.append(data)
     
