@@ -1,0 +1,17 @@
+{
+    'system': 'humanoid',
+    'control': 'learned',
+    'use_limits': False,
+    'high_dims': 67,
+    'hidden_shape': 128,
+    'low_dims': 2,
+    'subsample': 1,
+    'step': 1,
+    'epochs': 1000,
+    'patience': 100,
+    'batch_size': 1024,
+    'learning_rate': 0.001,
+    'data_dir': 'data/humanoid/',
+    'model_dir': 'models/humanoid/',
+    'log_dir': 'logs/humanoid/',
+}
