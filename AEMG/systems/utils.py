@@ -4,6 +4,7 @@ from AEMG.systems.cartpole import Cartpole
 from AEMG.systems.bistable import Bistable
 from AEMG.systems.N_CML import N_CML
 from AEMG.systems.leslie_map import Leslie_map
+from AEMG.systems.humanoid import Humanoid
 
 def get_system(name, dims=10, **kwargs):
     if name == "pendulum":
@@ -18,6 +19,8 @@ def get_system(name, dims=10, **kwargs):
         system = N_CML(**kwargs)
     elif name == "leslie_map":
         system = Leslie_map(**kwargs)
+    elif name == "humanoid":
+        system = Humanoid(**kwargs)
     else:
         print("That system does not exist!")
         raise NotImplementedError
