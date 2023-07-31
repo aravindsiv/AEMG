@@ -48,6 +48,8 @@ def main():
     parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
     parser.add_argument('--config',help='Config file inside config_dir',type=str,default='bistable.txt')
     parser.add_argument('--verbose',help='Print training output',type=int,default=1)
+    parser.add_argument('--collapse',help='Check for collapse',action='store_true')
+
 
     args = parser.parse_args()
     config_fname = args.config_dir + args.config
@@ -85,11 +87,9 @@ def main():
         trainer.reset_losses()
 
 
-    # if not check_collapse(trainer.encoder, dataset):
-    check_collapse(trainer.encoder, train_dataset)
-    trainer.save_models()
-
-    
+    if args.collapse:
+        check_collapse(trainer.encoder, train_dataset)
+    trainer.save_models()    
 
 if __name__ == "__main__":
     main()
