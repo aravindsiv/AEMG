@@ -162,7 +162,7 @@ def main(args, config, experiment_name):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_dir',help='Directory of config files',type=str,default='/Users/ewerton/Dropbox/Codes/AEMG/examples/config/')
+    parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
     parser.add_argument('--config',help='Config file inside config_dir',type=str,default='pendulum_lqr_1K.txt')
     parser.add_argument('--name_out',help='Name of the out file',type=str,default='out_exp')
     parser.add_argument('--RoA',help='Compute RoA',action='store_true')
