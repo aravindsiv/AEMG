@@ -2,6 +2,7 @@ import numpy as np
 from AEMG.systems.system import BaseSystem
 import matplotlib.pyplot as plt
 
+# fix the transform
 
 class NdPendulum(BaseSystem):
     def __init__(self, dims=9, **kwargs):
@@ -43,6 +44,7 @@ class NdPendulum(BaseSystem):
 
         self.l = 0.5
     
+    # it needs to be vectorized
     def transform(self,s):
         pt = np.zeros((self.centers.shape[0],))
         for i in range(self.centers.shape[0]):

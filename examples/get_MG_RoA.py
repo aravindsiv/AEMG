@@ -114,10 +114,12 @@ def main(args, config, experiment_name):
         grid_original_space = Grid.Grid(lower_bounds_original_space, upper_bounds_original_space, sb + 2)
         original_space_sample = grid_original_space.uniform_sample()
         if flag_true_bounds:
-            original_space_sample = np.array([system.transform(i) for i in original_space_sample])
+            original_space_sample = system.sample_state(2**(sb + 2))
+            # original_space_sample = np.array([system.transform(i) for i in original_space_sample])
 
     elif args.validation_type == 'random': # random sample (ideal for high dim space)
-        original_space_sample = np.array([system.transform(system.sample_state()) for i in range(2**(sb+2))])
+        original_space_sample = system.sample_state(2**(sb + 2))
+        # original_space_sample = np.array([system.transform(system.sample_state()) for i in range(2**(sb+2))])
 
     else: # sample from trajectories (ideal for large trajectory set)
         dataset = DynamicsDataset(config)

@@ -138,7 +138,7 @@ if __name__ == "__main__":
     parser.add_argument('--shell',help='Generate shell script to send job',type=str,default="")
     parser.add_argument('--seed', help='Select the number of experiments', type=int, default=10)
     parser.add_argument('--num_layers', help='Select the number of layers', type=int, default=1)
-    parser.add_argument('--data_size', help='Select the data size ', type=int, default=1)
+    parser.add_argument('--data_size', help='Select data size (accept seq of numbers)', action='store', type=int, nargs='*', default=[1])
     parser.add_argument('--num_design', help='Select the number of designs', type=int, default=3)
     parser.add_argument('--num_steps', help='Select the number of steps', type=int, default=1)
 
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     # Possible values for the number of layers
     num_layers = list(range(1, args.num_layers + 1))
     # Possible values for the data size (in k)
-    data_size = [10**i for i in range(args.data_size)]
+    data_size = args.data_size #[10**i for i in range(args.data_size)]
 
     # Possible values for steps
     steps = [1, 3, 6, 12][0:args.num_steps]

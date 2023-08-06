@@ -7,11 +7,16 @@ class Cartpole(BaseSystem):
         super().__init__(**kwargs)
         self.name = "cartpole"
 
-    def transform(self,x):
-        theta = x[1]
+    # def transform(self,x):
+    #     theta = x[1]
+    #     # x[1] = np.arctan2(np.sin(theta),np.cos(theta))
+    #     x = [x[0], np.cos(theta), np.sin(theta), x[2], x[3]]
+    #     return x
+
+    def transform(self, x):
+        x = np.array(x)
         # x[1] = np.arctan2(np.sin(theta),np.cos(theta))
-        x = [x[0], np.cos(theta), np.sin(theta), x[2], x[3]]
-        return x
+        return np.array([x[:,0], np.cos(x[:,1]), np.sin(x[:,1]), x[:,2], x[:,3]]).T
     
     def achieved_goal(self,s):
         diff = np.sqrt(s[1]*s[1] + s[3]*s[3])
