@@ -24,10 +24,13 @@ class DynamicsDataset(Dataset):
             data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
             indices = np.arange(data.shape[0])
             subsampled_indices = indices % subsample == 0
-            subsampled_data = data[subsampled_indices]
-            for i in range(subsampled_data.shape[0] - step):  # TODO_apply system.transform after
-                Xt.append(system.transform(subsampled_data[i]))
-                Xnext.append(system.transform(subsampled_data[i + step]))
+            subsampled_data_untransformed = data[subsampled_indices]
+            subsampled_data = system.transform(subsampled_data_untransformed)
+            Xt.append(subsampled_data[:-step])
+            Xnext.append(subsampled_data[step:])
+            # for i in range(subsampled_data.shape[0] - step): 
+            #     Xt.append(system.transform(subsampled_data[i]))
+            #     Xnext.append(system.transform(subsampled_data[i + step]))
             
         self.Xt = np.array(Xt)
         self.Xnext = np.array(Xnext)
@@ -77,11 +80,12 @@ class TrajectoryDataset:
             subsampled_indices = indices % subsample == 0
             subsampled_data = raw_data[subsampled_indices]
             # Transform each state in the trajectory
-            data = []
-            for i in range(subsampled_data.shape[0]):
-                data.append(system.transform(subsampled_data[i]))
-            data = np.array(data)
-            self.trajs.append(data)
+            self.trajs.append(system.transform(subsampled_data))
+            # data = []
+            # for i in range(subsampled_data.shape[0]):
+            #     data.append(system.transform(subsampled_data[i]))
+            # data = np.array(data)
+            # self.trajs.append(data)
     
     def __len__(self):
         return len(self.trajs)

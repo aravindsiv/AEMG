@@ -47,7 +47,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
     parser.add_argument('--config',help='Config file inside config_dir',type=str,default='bistable.txt')
-    parser.add_argument('--verbose',help='Print training output',type=int,default=1)
+    parser.add_argument('--verbose',help='Print training output',action='store_true')
     parser.add_argument('--collapse',help='Check for collapse',action='store_true')
 
 
@@ -76,7 +76,7 @@ def main():
 
     loaders = {'train': train_loader, 'test': test_loader}
 
-    trainer = Training(config, loaders, bool(int(args.verbose)))
+    trainer = Training(config, loaders, args.verbose)
     experiment = TrainingConfig(config['experiment'])
 
     for i,exp in enumerate(experiment):
