@@ -66,12 +66,20 @@ class DynamicsDataset(Dataset):
 
 class TrajectoryDataset:
     # Useful for plotting
-    def __init__(self, config):
+    def __init__(self, config, labels_fname=None):
         self.trajs = []
         subsample = config['subsample']
 
         system = get_system(config['system'], config['high_dims'])
         print("Getting data for: ",system.name)
+
+        self.labels_dict = {}
+        self.labels = []
+        if labels_fname is not None:
+            labels = np.loadtxt(labels_fname, delimiter=',', dtype=str)
+            # Create dict with key as fname and value as label
+            for i in range(len(labels)):
+                self.labels_dict[labels[i,0]] = int(labels[i,1])
 
         for f in tqdm(os.listdir(config['data_dir'])):
             raw_data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
@@ -86,9 +94,26 @@ class TrajectoryDataset:
             #     data.append(system.transform(subsampled_data[i]))
             # data = np.array(data)
             # self.trajs.append(data)
+            if labels_fname is not None:
+                try:
+                    self.labels.append(self.labels_dict[f])
+                except KeyError:
+                    print("No label found for ", f)
+                    self.labels.append(-1)
     
     def __len__(self):
         return len(self.trajs)
     
     def __getitem__(self, idx):
         return self.trajs[idx]
+    
+    def get_label(self,index):
+        return self.labels[index]
+    
+    def get_attracting_final_points(self):
+        assert len(self.trajs) == len(self.labels)
+        final_points = []
+        for i in range(len(self.trajs)):
+            if self.labels[i] == 1:
+                final_points.append(self.trajs[i][-1])
+        return np.array(final_points)
