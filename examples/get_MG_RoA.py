@@ -92,7 +92,7 @@ def main(args, config, experiment_name):
     if type(system.get_true_bounds()) == type(NotImplementedError):  # use data for not implemented bounds
         a = np.loadtxt(os.path.join(config['model_dir'], 'X_min.txt'), delimiter=',').tolist()
         b = np.loadtxt(os.path.join(config['model_dir'], 'X_max.txt'), delimiter=',').tolist()
-        system.sample_state = np.array([a,b]).T
+        system.state_bounds = np.array([a,b]).T
 
     lower_bounds_original_space = system.get_true_bounds()[:,0].tolist()
     upper_bounds_original_space = system.get_true_bounds()[:,1].tolist()
