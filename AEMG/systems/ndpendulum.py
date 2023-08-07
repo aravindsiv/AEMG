@@ -10,6 +10,7 @@ class NdPendulum(BaseSystem):
         self.name = "ndpendulum"
 
         # self.state_bounds = np.array([[-np.pi, np.pi], [-2*np.pi, 2*np.pi]])
+        self.state_bounds = NotImplementedError
         
         
         # Find smallest N such that dims < N*N

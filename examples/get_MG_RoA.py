@@ -126,7 +126,7 @@ def main(args, config, experiment_name):
         #     # original_space_sample = np.array([system.transform(i) for i in original_space_sample])
 
     elif args.validation_type == 'random': # random sample (ideal for high dim space)
-        original_space_sample = system.sample_state(2**(sb + 6))
+        original_space_sample = system.sample_state(2**(sb + 4))
         # original_space_sample = np.array([system.transform(system.sample_state()) for i in range(2**(sb+2))])
 
     else: # sample from trajectories (ideal for large trajectory set)
