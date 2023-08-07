@@ -2,7 +2,7 @@
     'system': 'trifinger',
     'control': 'learned',
     'use_limits': False,
-    'high_dims': 128,
+    'high_dims': 138,
     'hidden_shape': 128,
     'low_dims': 2,
     'subsample': 5,
