@@ -26,8 +26,8 @@ class N_CML(BaseSystem):
     def f(self,s):
         return [self.F_i(s, i, self.delta, self.a, self.epsilon) for i in range(self.N)]
 
-    def get_true_bounds(self):
-        return self.state_bounds
+    # def get_true_bounds(self):
+    #     return self.state_bounds
     
-    def get_bounds(self):
-        return NotImplementedError
+    # def get_bounds(self):
+    #     return NotImplementedError

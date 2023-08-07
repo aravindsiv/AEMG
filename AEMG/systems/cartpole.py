@@ -6,6 +6,7 @@ class Cartpole(BaseSystem):
         # x, theta, xdot, thetadot
         super().__init__(**kwargs)
         self.name = "cartpole"
+        # self.state_bounds = np.array([[-1, 1], [-np.pi, np.pi], [-1.27, 1.27], [-3.04, 3.04]])
 
     # def transform(self,x):
     #     theta = x[1]
@@ -26,5 +27,5 @@ class Cartpole(BaseSystem):
         # bounds normalized by arctan2
         return np.array([[-1, 1], [-np.pi, np.pi], [-1.27, 1.27], [-3.04, 3.04]])
     
-    def get_bounds(self):
-        return NotImplementedError
+    # def get_bounds(self):
+    #     return NotImplementedError

@@ -89,8 +89,13 @@ def main(args, config, experiment_name):
 
 
     # Get the limits
-    lower_bounds_original_space = np.loadtxt(os.path.join(config['model_dir'], 'X_min.txt'), delimiter=',').tolist()
-    upper_bounds_original_space = np.loadtxt(os.path.join(config['model_dir'], 'X_max.txt'), delimiter=',').tolist()
+    if type(system.get_true_bounds()) == type(NotImplementedError):  # use data for not implemented bounds
+        a = np.loadtxt(os.path.join(x, 'X_min.txt'), delimiter=',').tolist()
+        b = np.loadtxt(os.path.join(x, 'X_max.txt'), delimiter=',').tolist()
+        system.sample_state = np.array([a,b]).T
+
+    lower_bounds_original_space = system.get_true_bounds()[:,0].tolist()
+    upper_bounds_original_space = system.get_true_bounds()[:,1].tolist()
     print("Bounds for decoded space", lower_bounds_original_space, upper_bounds_original_space)
 
 
@@ -104,21 +109,24 @@ def main(args, config, experiment_name):
 
     grid = Grid.Grid(lower_bounds, upper_bounds, sb)
 
-    flag_true_bounds = False
-    if not system.get_true_bounds == NotImplementedError:  # update bounds using the true_bounds
-        lower_bounds_original_space = system.get_true_bounds()[:,0].tolist()
-        upper_bounds_original_space = system.get_true_bounds()[:,1].tolist()
-        flag_true_bounds = True
+
+    # flag_true_bounds = False
+    # if type(system.get_true_bounds()) != type(NotImplementedError):  # update bounds using the true_bounds
+    #     lower_bounds_original_space = system.get_true_bounds()[:,0].tolist()
+    #     upper_bounds_original_space = system.get_true_bounds()[:,1].tolist()
+    #     flag_true_bounds = True
 
     if args.validation_type == 'uniform': # uniform sample (high memory usage)
         grid_original_space = Grid.Grid(lower_bounds_original_space, upper_bounds_original_space, sb + 2)
         original_space_sample = grid_original_space.uniform_sample()
-        if flag_true_bounds:
-            original_space_sample = system.sample_state(2**(sb + 2))
-            # original_space_sample = np.array([system.transform(i) for i in original_space_sample])
+        original_space_sample = system.transform(original_space_sample)
+
+        # if flag_true_bounds:
+        #     original_space_sample = system.sample_state(2**(sb + 2))
+        #     # original_space_sample = np.array([system.transform(i) for i in original_space_sample])
 
     elif args.validation_type == 'random': # random sample (ideal for high dim space)
-        original_space_sample = system.sample_state(2**(sb + 2))
+        original_space_sample = system.sample_state(2**(sb + 6))
         # original_space_sample = np.array([system.transform(system.sample_state()) for i in range(2**(sb+2))])
 
     else: # sample from trajectories (ideal for large trajectory set)

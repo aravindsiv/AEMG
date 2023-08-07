@@ -13,8 +13,8 @@ class Leslie_map(BaseSystem):
     def f(self,s):
         return [(self.params[0] * s[0] + self.params[1] * s[1]) * np.exp(-0.1 * (s[0] + s[1])), 0.7 * s[0]] + [0.25*s[i] for i in range(2, len(s))]
 
-    def get_true_bounds(self):
-        return self.state_bounds
+    # def get_true_bounds(self):
+    #     return self.state_bounds
     
-    def get_bounds(self):
-        return NotImplementedError
+    # def get_bounds(self):
+    #     return NotImplementedError

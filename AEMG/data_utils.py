@@ -25,7 +25,7 @@ class DynamicsDataset(Dataset):
             indices = np.arange(data.shape[0])
             subsampled_indices = indices % subsample == 0
             subsampled_data = data[subsampled_indices]
-            for i in range(subsampled_data.shape[0] - step):
+            for i in range(subsampled_data.shape[0] - step):  # TODO_apply system.transform after
                 Xt.append(system.transform(subsampled_data[i]))
                 Xnext.append(system.transform(subsampled_data[i + step]))
             
