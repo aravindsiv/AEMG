@@ -24,28 +24,35 @@ class DynamicsUtils:
         self.decoder  = Decoder(config)
         self.dynamics = LatentDynamics(config)
 
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print("Device: ", self.device)
+
         self.encoder = torch.load(os.path.join(config['model_dir'], 'encoder.pt'))
         self.decoder = torch.load(os.path.join(config['model_dir'], 'decoder.pt'))
         self.dynamics = torch.load(os.path.join(config['model_dir'], 'dynamics.pt'))
 
+        self.encoder.to(self.device)
+        self.decoder.to(self.device)
+        self.dynamics.to(self.device)
+
     def f(self, z):
         # This function takes as input a latent state and returns the next latent state
-        z = torch.tensor(z, dtype=torch.float32)
-        return self.dynamics(z).detach().numpy()
+        z = torch.tensor(z, dtype=torch.float32).to(self.device)
+        return self.dynamics(z).detach().to('cpu').numpy()
 
     def encode(self, x, normalize=True):
         # This function takes as input a raw state (un-normalized)
         # and returns the latent state
         if normalize:
             x = (x - self.X_min) / (self.X_max - self.X_min)
-        x = torch.tensor(x, dtype=torch.float32)
-        return self.encoder(x).detach().numpy()
+        x = torch.tensor(x, dtype=torch.float32).to(self.device)
+        return self.encoder(x).detach().to('cpu').numpy()
 
     def decode(self, x):
         # This function takes as input a latent state
         # and returns the raw state (un-normalized)
-        x = torch.tensor(x, dtype=torch.float32)
-        x = self.decoder(x).detach().numpy()
+        x = torch.tensor(x, dtype=torch.float32).to(self.device)
+        x = self.decoder(x).detach().to('cpu').numpy()
         return x * (self.X_max - self.X_min) + self.X_min
 
 class EnsembleDynamics:

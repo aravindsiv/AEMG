@@ -32,8 +32,9 @@ class DynamicsDataset(Dataset):
             #     Xt.append(system.transform(subsampled_data[i]))
             #     Xnext.append(system.transform(subsampled_data[i + step]))
             
-        self.Xt = np.array(Xt)
-        self.Xnext = np.array(Xnext)
+        self.Xt = np.vstack(Xt)
+        self.Xnext = np.vstack(Xnext)
+        assert len(self.Xt) == len(self.Xnext), "Xt and Xnext must have the same length"
 
         # Normalize the data
         if config['use_limits']:

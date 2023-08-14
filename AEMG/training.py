@@ -101,8 +101,8 @@ class Training:
         It will stop if the test loss does not improve for "patience" epochs.
         '''
         weight_bool = [bool(i) for i in weight]
-        list_parameters = (weight_bool[0] or weight_bool[1]) * (list(self.encoder.parameters()) + list(self.decoder.parameters()))
-        list_parameters += weight_bool[2] * list(self.dynamics.parameters())
+        list_parameters = (weight_bool[0] or weight_bool[1] or weight_bool[2]) * (list(self.encoder.parameters()) + list(self.decoder.parameters()))
+        list_parameters += (weight_bool[1] or weight_bool[2]) * list(self.dynamics.parameters())
         optimizer = torch.optim.Adam(list_parameters, lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=0.001, patience=patience, verbose=True)
         for epoch in tqdm(range(epochs)):
