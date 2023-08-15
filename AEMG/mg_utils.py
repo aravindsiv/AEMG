@@ -79,11 +79,11 @@ class MorseGraphOutputProcessor:
             corner_point_low  = self.morse_nodes_data[i, 2:2+self.dims]
             corner_point_high = self.morse_nodes_data[i, 2+self.dims:]
             if np.all(point >= corner_point_low) and np.all(point <= corner_point_high):
-                return self.morse_nodes_data[i, 1]
+                return int(self.morse_nodes_data[i, 1])
         for i in range(self.attractor_nodes_data.shape[0]):
             corner_point_low  = self.attractor_nodes_data[i, 2:2+self.dims]
             corner_point_high = self.attractor_nodes_data[i, 2+self.dims:]
             if np.all(point >= corner_point_low) and np.all(point <= corner_point_high):
-                return self.attractor_nodes_data[i, 1]
+                return int(self.attractor_nodes_data[i, 1])
         return -1
         

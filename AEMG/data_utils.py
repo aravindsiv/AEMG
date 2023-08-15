@@ -111,7 +111,15 @@ class TrajectoryDataset:
     def get_label(self,index):
         return self.labels[index]
     
-    def get_attracting_final_points(self):
+    def get_successful_initial_conditions(self):
+        assert len(self.trajs) == len(self.labels)
+        initial_points = []
+        for i in range(len(self.trajs)):
+            if self.labels[i] == 1:
+                initial_points.append(self.trajs[i][0])
+        return np.array(initial_points)
+    
+    def get_successful_final_conditions(self):
         assert len(self.trajs) == len(self.labels)
         final_points = []
         for i in range(len(self.trajs)):
