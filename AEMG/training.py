@@ -16,8 +16,8 @@ class TrainingConfig:
         self.weights = []
         for _, id in enumerate(ids):
             self.weights.append([float(e) for e in id.split('x')[:-1]])
-            if len(self.weights[-1]) != 3:
-                print("Expected 3 values per training config, got ", len(self.weights[-1]))
+            if len(self.weights[-1]) != 4:
+                print("Expected 4 values per training config, got ", len(self.weights[-1]))
                 raise ValueError
     
     def __getitem__(self, key):
@@ -41,8 +41,8 @@ class Training:
         self.dynamics.to(self.device)
         self.decoder.to(self.device)
 
-        self.train_loader = loaders['train']
-        self.test_loader = loaders['test']
+        self.dynamics_train_loader = loaders['train_dynamics']
+        self.dynamics_test_loader = loaders['test_dynamics']
 
         self.reset_losses()
 
@@ -86,7 +86,7 @@ class Training:
 
         return (x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn)
 
-    def losses(self, foward_pass, weight):
+    def dynamics_losses(self, foward_pass, weight):
         x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn = foward_pass
 
         loss_ae1 = self.criterion(x_t, x_t_pred)
@@ -120,13 +120,13 @@ class Training:
             if weight_bool[2]: 
                 self.dynamics.train()
 
-            for i, (x_t, x_tau) in enumerate(self.train_loader):
+            for i, (x_t, x_tau) in enumerate(self.dynamics_train_loader):
                 optimizer.zero_grad()
 
                 # Forward pass
                 forward_pass = self.forward(x_t, x_tau)
                 # Compute losses
-                loss_ae1, loss_ae2, loss_dyn, loss_total = self.losses(forward_pass, weight)
+                loss_ae1, loss_ae2, loss_dyn, loss_total = self.dynamics_losses(forward_pass, weight)
                 # Backward pass
                 loss_total.backward()
                 optimizer.step()
@@ -136,10 +136,10 @@ class Training:
                 loss_dyn_train += loss_dyn.item() * weight[2]
                 epoch_train_loss += loss_total.item()
 
-            self.train_losses['loss_ae1'].append(loss_ae1_train / len(self.train_loader))
-            self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.train_loader))
-            self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.train_loader))
-            self.train_losses['loss_total'].append(epoch_train_loss / len(self.train_loader))
+            self.train_losses['loss_ae1'].append(loss_ae1_train / len(self.dynamics_train_loader))
+            self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.dynamics_train_loader))
+            self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.dynamics_train_loader))
+            self.train_losses['loss_total'].append(epoch_train_loss / len(self.dynamics_train_loader))
 
             with torch.no_grad():
                 loss_ae1_test = 0
@@ -152,23 +152,23 @@ class Training:
                 if weight_bool[2]: 
                     self.dynamics.eval()
 
-                for i, (x_t, x_tau) in enumerate(self.test_loader):
+                for i, (x_t, x_tau) in enumerate(self.dynamics_test_loader):
                     # Forward pass
                     forward_pass = self.forward(x_t, x_tau)
                     # Compute losses
-                    loss_ae1, loss_ae2, loss_dyn, loss_total = self.losses(forward_pass, weight)
+                    loss_ae1, loss_ae2, loss_dyn, loss_total = self.dynamics_losses(forward_pass, weight)
 
                     loss_ae1_test += loss_ae1.item() * weight[0]
                     loss_ae2_test += loss_ae2.item() * weight[1]
                     loss_dyn_test += loss_dyn.item() * weight[2]
                     epoch_test_loss += loss_total.item()
 
-                self.test_losses['loss_ae1'].append(loss_ae1_test / len(self.test_loader))
-                self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.test_loader))
-                self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.test_loader))
-                self.test_losses['loss_total'].append(epoch_test_loss / len(self.test_loader))
+                self.test_losses['loss_ae1'].append(loss_ae1_test / len(self.dynamics_test_loader))
+                self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.dynamics_test_loader))
+                self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.dynamics_test_loader))
+                self.test_losses['loss_total'].append(epoch_test_loss / len(self.dynamics_test_loader))
 
-            scheduler.step(epoch_test_loss / len(self.test_loader))
+            scheduler.step(epoch_test_loss / len(self.dynamics_test_loader))
             
             if epoch >= patience:
                 if np.mean(self.test_losses['loss_total'][-patience:]) > np.mean(self.test_losses['loss_total'][-patience-1:-1]):
@@ -177,4 +177,4 @@ class Training:
                     break
             
             if self.verbose:
-                print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.train_loader), epoch_test_loss / len(self.test_loader)))
+                print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.dynamics_train_loader), epoch_test_loss / len(self.dynamics_test_loader)))

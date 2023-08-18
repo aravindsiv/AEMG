@@ -23,7 +23,7 @@ def check_collapse(encoder, dataset):
 
     test_freq = int(min(10000, (len(dataset)-dim_low)/dim_low))
 
-    # train_dataset = np.random.shuffle(train_dataset)
+    # dynamics_train_dataset = np.random.shuffle(dynamics_train_dataset)
     for test_index in range(test_freq):
 
         matrix3 = np.array([encoder(dataset[i + test_index * dim_low][0]).detach().numpy() for i in range(dim_low+1)])        
@@ -66,15 +66,15 @@ def main():
     train_size = int(0.8*len(dataset))
     test_size = len(dataset) - train_size
 
-    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
-    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=True)
+    dynamics_train_dataset, dynamics_test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+    dynamics_train_loader = DataLoader(dynamics_train_dataset, batch_size=config["batch_size"], shuffle=True)
+    dynamics_test_loader = DataLoader(dynamics_test_dataset, batch_size=config["batch_size"], shuffle=True)
 
     if args.verbose:
-        print("Train size: ", len(train_dataset))
-        print("Test size: ", len(test_dataset))
+        print("Train size: ", len(dynamics_train_dataset))
+        print("Test size: ", len(dynamics_test_dataset))
 
-    loaders = {'train': train_loader, 'test': test_loader}
+    loaders = {'train_dynamics': dynamics_train_loader, 'test_dynamics': dynamics_test_loader}
 
     trainer = Training(config, loaders, args.verbose)
     experiment = TrainingConfig(config['experiment'])
@@ -88,7 +88,7 @@ def main():
 
 
     if args.collapse:
-        check_collapse(trainer.encoder, train_dataset)
+        check_collapse(trainer.encoder, dynamics_train_dataset)
     trainer.save_models()    
 
 if __name__ == "__main__":

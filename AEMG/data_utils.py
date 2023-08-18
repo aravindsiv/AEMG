@@ -65,6 +65,34 @@ class DynamicsDataset(Dataset):
     def __getitem__(self, idx):
         return self.Xt[idx], self.Xnext[idx]
 
+class LabelsDataset(Dataset):
+    def __init__(self,config):
+        labels = np.loadtxt(config['labels_fname'], delimiter=',', dtype=str)
+        labels_dict = {}
+        for i in range(len(labels)):
+            labels_dict[labels[i,0]] = int(labels[i,1])
+
+        self.final_points = []
+        self.labels = []
+
+        for f in tqdm(os.listdir(config['data_dir'])):
+            data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
+            self.final_points.append(data[-1])
+            try:
+                self.labels.append(labels_dict[f])
+            except KeyError:
+                print("No label found for ", f)
+                self.labels.append(-1)
+
+        self.final_points = np.array(self.final_points)
+        self.labels = np.array(self.labels)
+
+    def __len__(self):
+        return len(self.final_points)
+
+    def __getitem__(self, idx):
+        return self.final_points[idx], self.labels[idx]         
+            
 class TrajectoryDataset:
     # Useful for plotting
     def __init__(self, config, labels_fname=None):
@@ -118,11 +146,27 @@ class TrajectoryDataset:
             if self.labels[i] == 1:
                 initial_points.append(self.trajs[i][0])
         return np.array(initial_points)
+
+    def get_unsuccessful_initial_conditions(self):
+        assert len(self.trajs) == len(self.labels)
+        initial_points = []
+        for i in range(len(self.trajs)):
+            if self.labels[i] == 0:
+                initial_points.append(self.trajs[i][0])
+        return np.array(initial_points)
     
     def get_successful_final_conditions(self):
         assert len(self.trajs) == len(self.labels)
         final_points = []
         for i in range(len(self.trajs)):
             if self.labels[i] == 1:
+                final_points.append(self.trajs[i][-1])
+        return np.array(final_points)
+
+    def get_unsuccessful_final_conditions(self):
+        assert len(self.trajs) == len(self.labels)
+        final_points = []
+        for i in range(len(self.trajs)):
+            if self.labels[i] == 0:
                 final_points.append(self.trajs[i][-1])
         return np.array(final_points)
