@@ -43,6 +43,7 @@ class Training:
 
         self.dynamics_train_loader = loaders['train_dynamics']
         self.dynamics_test_loader = loaders['test_dynamics']
+        self.labels_loader = loaders['labels']
 
         self.reset_losses()
 
@@ -68,8 +69,8 @@ class Training:
             pickle.dump(self.test_losses, f)
     
     def reset_losses(self):
-        self.train_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_total': []}
-        self.test_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_total': []}
+        self.train_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_contrastive': [] 'loss_total': []}
+        self.test_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_contrastive': [], 'loss_total': []}
     
     def forward(self, x_t, x_tau):
         x_t = x_t.to(self.device)
@@ -95,7 +96,10 @@ class Training:
         loss_total = loss_ae1 * weight[0] + loss_ae2 * weight[1] + loss_dyn * weight[2]
         return loss_ae1, loss_ae2, loss_dyn, loss_total
 
-    def train(self, epochs=1000, patience=50, weight=[1,1,1]):
+    def labels_losses(self, forward_pass, weight):
+        raise NotImplementedError
+    
+    def train(self, epochs=1000, patience=50, weight=[1,1,1,0]):
         '''
         Function that trains all the models with all the losses and weight.
         It will stop if the test loss does not improve for "patience" epochs.
@@ -109,6 +113,7 @@ class Training:
             loss_ae1_train = 0
             loss_ae2_train = 0
             loss_dyn_train = 0
+            loss_contrastive = 0
 
             epoch_train_loss = 0
             epoch_test_loss  = 0
@@ -136,9 +141,19 @@ class Training:
                 loss_dyn_train += loss_dyn.item() * weight[2]
                 epoch_train_loss += loss_total.item()
 
+            if weight[3] != 0:
+                for i, (x_final, label) in enumerate(self.labels_loader):
+                    # Implement forward pass
+                    raise NotImplementedError
+                    loss_con = self.labels_losses(forward_pass, weight)
+                    loss_contrastive += loss_con.item() * weight[3]
+                    loss_con.backward()
+                    optimizer.step()
+
             self.train_losses['loss_ae1'].append(loss_ae1_train / len(self.dynamics_train_loader))
             self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.dynamics_train_loader))
             self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.dynamics_train_loader))
+            self.train_losses['loss_contrastive'].append(loss_contrastive / len(self.labels_loader))
             self.train_losses['loss_total'].append(epoch_train_loss / len(self.dynamics_train_loader))
 
             with torch.no_grad():
@@ -166,6 +181,7 @@ class Training:
                 self.test_losses['loss_ae1'].append(loss_ae1_test / len(self.dynamics_test_loader))
                 self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.dynamics_test_loader))
                 self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.dynamics_test_loader))
+                self.test_losses['loss_contrastive'].append(loss_contrastive / len(self.labels_loader))
                 self.test_losses['loss_total'].append(epoch_test_loss / len(self.dynamics_test_loader))
 
             scheduler.step(epoch_test_loss / len(self.dynamics_test_loader))

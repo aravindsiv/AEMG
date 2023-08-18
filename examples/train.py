@@ -1,4 +1,4 @@
-from AEMG.data_utils import DynamicsDataset
+from AEMG.data_utils import DynamicsDataset, LabelsDataset
 from AEMG.models import *
 from AEMG.training import Training, TrainingConfig
 
@@ -59,22 +59,25 @@ def main():
     
     torch.manual_seed(config["seed"])
     
-    dataset = DynamicsDataset(config)
+    dynamics_dataset = DynamicsDataset(config)
+    labels_dataset = LabelsDataset(config)
     
     np.random.seed(config["seed"])
 
-    train_size = int(0.8*len(dataset))
-    test_size = len(dataset) - train_size
+    train_size = int(0.8*len(dynamics_dataset))
+    test_size = len(dynamics_dataset) - train_size
 
-    dynamics_train_dataset, dynamics_test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+    dynamics_train_dataset, dynamics_test_dataset = torch.utils.data.random_split(dynamics_dataset, [train_size, test_size])
     dynamics_train_loader = DataLoader(dynamics_train_dataset, batch_size=config["batch_size"], shuffle=True)
     dynamics_test_loader = DataLoader(dynamics_test_dataset, batch_size=config["batch_size"], shuffle=True)
+    labels_loader = DataLoader(labels_dataset, batch_size=config["batch_size"], shuffle=True)
 
     if args.verbose:
         print("Train size: ", len(dynamics_train_dataset))
         print("Test size: ", len(dynamics_test_dataset))
 
-    loaders = {'train_dynamics': dynamics_train_loader, 'test_dynamics': dynamics_test_loader}
+    loaders = {'train_dynamics': dynamics_train_loader, 'test_dynamics': dynamics_test_loader,
+                'labels': labels_loader}
 
     trainer = Training(config, loaders, args.verbose)
     experiment = TrainingConfig(config['experiment'])
