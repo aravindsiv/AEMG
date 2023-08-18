@@ -85,7 +85,15 @@ class LabelsDataset(Dataset):
                 self.labels.append(-1)
 
         self.final_points = np.array(self.final_points)
+        system = get_system(config['system'], config['high_dims'])
+        self.final_points = system.transform(self.final_points)
+        X_max = np.loadtxt(os.path.join(config['model_dir'], 'X_max.txt'), delimiter=',')
+        X_min = np.loadtxt(os.path.join(config['model_dir'], 'X_min.txt'), delimiter=',')
+        self.final_points = (self.final_points - X_min) / (X_max - X_min)
+        self.final_points = torch.from_numpy(self.final_points).float()
+
         self.labels = np.array(self.labels)
+        self.labels = torch.from_numpy(self.labels).long()
 
     def __len__(self):
         return len(self.final_points)
