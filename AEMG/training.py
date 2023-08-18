@@ -69,7 +69,7 @@ class Training:
             pickle.dump(self.test_losses, f)
     
     def reset_losses(self):
-        self.train_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_contrastive': [] 'loss_total': []}
+        self.train_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_contrastive': [], 'loss_total': []}
         self.test_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_contrastive': [], 'loss_total': []}
     
     def forward(self, x_t, x_tau):
