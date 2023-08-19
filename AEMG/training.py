@@ -53,6 +53,8 @@ class Training:
         self.model_dir = config["model_dir"]
         self.log_dir = config["log_dir"]
 
+        self.contrastive_loss_margin = config["contrastive_loss_margin"]
+
     def save_models(self):
         torch.save(self.encoder, os.path.join(self.model_dir, 'encoder.pt'))
         torch.save(self.dynamics, os.path.join(self.model_dir, 'dynamics.pt'))
@@ -97,8 +99,26 @@ class Training:
         return loss_ae1, loss_ae2, loss_dyn, loss_total
 
     def labels_losses(self, encodings, labels, weight):
-        # https://stackoverflow.com/questions/57428524/how-to-create-anchor-positive-and-anchor-negative-pairs-from-dataset-for-trainin
-        raise NotImplementedError
+        # Gathering the indices of the success and failure labels
+        success_indices = torch.where(labels == 1)[0]
+        failure_indices = torch.where(labels == 0)[0]
+
+        # Creating all possible pairs of positive pairs which have the same label and negative pairs which have different labels
+        positive_pairs = torch.cat([
+            torch.stack(torch.meshgrid(success_indices, success_indices, indexing='ij'), dim=-1).reshape(-1, 2),
+            torch.stack(torch.meshgrid(failure_indices, failure_indices, indexing='ij'), dim=-1).reshape(-1, 2),
+        ])
+        negative_pairs = torch.stack(torch.meshgrid(success_indices, failure_indices, indexing='ij'), dim=-1).reshape(-1, 2)
+
+        # Calculating the pairwise cosine distance between all the encodings
+        pairwise_cosine_distance = 1 - nn.functional.cosine_similarity(encodings[None, :, :], encodings[:, None, :], dim=-1)
+
+        # Calculating the mean positive and negative cosine distance
+        positive_distance = torch.mean(pairwise_cosine_distance[positive_pairs[:, 0], positive_pairs[:, 1]])
+        negative_distance = torch.mean(pairwise_cosine_distance[negative_pairs[:, 0], negative_pairs[:, 1]])
+
+        # Replicating Triplet Loss' formula
+        return torch.mean(torch.clamp(positive_distance - negative_distance + self.contrastive_loss_margin, min=0))
 
     def train(self, epochs=1000, patience=50, weight=[1,1,1,0]):
         '''

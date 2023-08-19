@@ -8,7 +8,7 @@
     'subsample': 1,
     'step': 1,
     'seed': 42,
-    'experiment': '1x1x1xsumanth',
+    'experiment': '1x1x1x1xid',
     'epochs': 1000,
     'patience': 100,
     'batch_size': 1024,
@@ -16,4 +16,6 @@
     'data_dir': 'data/humanoid_learned1k/',
     'model_dir': 'models/humanoid/',
     'log_dir': 'logs/humanoid/',
+    'labels_fname': 'output/humanoid_learned1k/trajectory_success_details.txt',
+    'contrastive_loss_margin': 0.5,
 }
