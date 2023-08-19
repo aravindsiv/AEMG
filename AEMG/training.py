@@ -87,8 +87,8 @@ class Training:
 
         return (x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn)
 
-    def dynamics_losses(self, foward_pass, weight):
-        x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn = foward_pass
+    def dynamics_losses(self, forward_pass, weight):
+        x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn = forward_pass
 
         loss_ae1 = self.criterion(x_t, x_t_pred)
         loss_ae2 = self.criterion(x_tau, x_tau_pred_dyn)
@@ -97,9 +97,9 @@ class Training:
         return loss_ae1, loss_ae2, loss_dyn, loss_total
 
     def labels_losses(self, encodings, labels, weight):
-        # https://stackoverflow.com/questions/57428524/how-to-create-anchor-positive-and-anchor-negative-pairs-from-dataset-for-trainin 
+        # https://stackoverflow.com/questions/57428524/how-to-create-anchor-positive-and-anchor-negative-pairs-from-dataset-for-trainin
         raise NotImplementedError
-    
+
     def train(self, epochs=1000, patience=50, weight=[1,1,1,0]):
         '''
         Function that trains all the models with all the losses and weight.
