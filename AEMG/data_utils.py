@@ -1,5 +1,5 @@
 import AEMG
-from AEMG.systems.utils import get_system
+from AEMG.systems.utils import get_system, multi_dim_tensor_cartesian
 
 import numpy as np
 from tqdm import tqdm 
@@ -82,7 +82,7 @@ class LabelsDataset(Dataset):
                 self.labels.append(labels_dict[f])
             except KeyError:
                 print("No label found for ", f)
-                self.labels.append(-1)
+                self.labels.append(0)
 
         self.final_points = np.array(self.final_points)
         system = get_system(config['system'], config['high_dims'])
@@ -95,12 +95,64 @@ class LabelsDataset(Dataset):
         self.labels = np.array(self.labels)
         self.labels = torch.from_numpy(self.labels).long()
 
+        self.generate_contrastive_triplets()
+
     def __len__(self):
-        return len(self.final_points)
+        return len(self.contrastive_triplets)
 
     def __getitem__(self, idx):
-        return self.final_points[idx], self.labels[idx]         
-            
+        return self.contrastive_triplets[idx]
+
+    def generate_contrastive_triplets(self):
+        """
+        Generates the contrastive triplets for the dataset where each triplet has the form (anchor, positive, negative)
+        The anchor can be either a success or failure point, the positive is a point of the same class as the anchor, and the negative is a point of the opposite class
+        """
+
+        # Gathering the indices of the success and failure labels
+        success_indices = torch.where(self.labels == 1)[0]
+        failure_indices = torch.where(self.labels == 0)[0]
+
+        # Generating all possible combinations of success and failure indices for positive anchor pairs
+        success_anchor_pairs = torch.stack(torch.meshgrid(success_indices, success_indices)).T.reshape(-1,2)
+        failure_anchor_pairs = torch.stack(torch.meshgrid(failure_indices, failure_indices)).T.reshape(-1,2)
+
+        # Removing instances with the same index
+        success_anchor_pairs = success_anchor_pairs[success_anchor_pairs[:, 0] != success_anchor_pairs[:, 1]]
+        failure_anchor_pairs = failure_anchor_pairs[failure_anchor_pairs[:, 0] != failure_anchor_pairs[:, 1]]
+
+        success_indices = success_indices[:, None]
+        failure_indices = failure_indices[:, None]
+
+        # Adding negative values to the positive anchor pairs
+        success_failure_triplets = multi_dim_tensor_cartesian(success_anchor_pairs, failure_indices)
+        failure_success_triplets = multi_dim_tensor_cartesian(failure_anchor_pairs, success_indices)
+
+        # Concatenating all triplets
+        self.contrastive_triplets = torch.cat([success_failure_triplets, failure_success_triplets], dim=0)
+
+    def collate_fn(self, batch):
+        """
+        Processes the batch of triplets to create a batch of points present in the triplets and a new batch of triplets is created with the updated indices of the points
+        :param batch: batch of triplets
+        :return: updated batch of triplets and the batch of points
+        """
+        triplets = np.array([triplet.to('cpu').numpy() for triplet in batch])
+
+        # Getting the points present in the batch of triplets
+        unique_indices = np.unique(triplets)
+        x_batch = self.final_points[unique_indices]
+
+        # Updating the indices of the triplets to match the indices of the points in the batch
+        updated_triplets = []
+        for anchor_idx, pos_idx, neg_idx in triplets:
+            updated_anchor_idx = np.where(unique_indices == anchor_idx)[0][0]
+            updated_pos_idx = np.where(unique_indices == pos_idx)[0][0]
+            updated_neg_idx = np.where(unique_indices == neg_idx)[0][0]
+            updated_triplets.append([updated_anchor_idx, updated_pos_idx, updated_neg_idx])
+
+        return torch.tensor(updated_triplets), x_batch
+
 class TrajectoryDataset:
     # Useful for plotting
     def __init__(self, config, labels_fname=None):

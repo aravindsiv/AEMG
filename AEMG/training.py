@@ -47,13 +47,13 @@ class Training:
 
         self.reset_losses()
 
-        self.criterion = nn.MSELoss(reduction='mean')
+        self.dynamics_criterion = nn.MSELoss(reduction='mean')
+        self.labels_criterion = nn.TripletMarginLoss()
+
         self.lr = config["learning_rate"]
 
         self.model_dir = config["model_dir"]
         self.log_dir = config["log_dir"]
-
-        self.contrastive_loss_margin = config["contrastive_loss_margin"]
 
     def save_models(self):
         torch.save(self.encoder, os.path.join(self.model_dir, 'encoder.pt'))
@@ -92,33 +92,16 @@ class Training:
     def dynamics_losses(self, forward_pass, weight):
         x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn = forward_pass
 
-        loss_ae1 = self.criterion(x_t, x_t_pred)
-        loss_ae2 = self.criterion(x_tau, x_tau_pred_dyn)
-        loss_dyn = self.criterion(z_tau_pred, z_tau)
+        loss_ae1 = self.dynamics_criterion(x_t, x_t_pred)
+        loss_ae2 = self.dynamics_criterion(x_tau, x_tau_pred_dyn)
+        loss_dyn = self.dynamics_criterion(z_tau_pred, z_tau)
         loss_total = loss_ae1 * weight[0] + loss_ae2 * weight[1] + loss_dyn * weight[2]
         return loss_ae1, loss_ae2, loss_dyn, loss_total
 
-    def labels_losses(self, encodings, labels, weight):
-        # Gathering the indices of the success and failure labels
-        success_indices = torch.where(labels == 1)[0]
-        failure_indices = torch.where(labels == 0)[0]
+    def labels_losses(self, encodings, triplets):
+        contrastive_loss = self.labels_criterion(encodings[triplets[:, 0]], encodings[triplets[:, 1]], encodings[triplets[:, 2]])
+        return contrastive_loss
 
-        # Creating all possible pairs of positive pairs which have the same label and negative pairs which have different labels
-        positive_pairs = torch.cat([
-            torch.stack(torch.meshgrid(success_indices, success_indices, indexing='ij'), dim=-1).reshape(-1, 2),
-            torch.stack(torch.meshgrid(failure_indices, failure_indices, indexing='ij'), dim=-1).reshape(-1, 2),
-        ])
-        negative_pairs = torch.stack(torch.meshgrid(success_indices, failure_indices, indexing='ij'), dim=-1).reshape(-1, 2)
-
-        # Calculating the pairwise cosine distance between all the encodings
-        pairwise_cosine_distance = 1 - nn.functional.cosine_similarity(encodings[None, :, :], encodings[:, None, :], dim=-1)
-
-        # Calculating the mean positive and negative cosine distance
-        positive_distance = torch.mean(pairwise_cosine_distance[positive_pairs[:, 0], positive_pairs[:, 1]])
-        negative_distance = torch.mean(pairwise_cosine_distance[negative_pairs[:, 0], negative_pairs[:, 1]])
-
-        # Replicating Triplet Loss' formula
-        return torch.mean(torch.clamp(positive_distance - negative_distance + self.contrastive_loss_margin, min=0))
 
     def train(self, epochs=1000, patience=50, weight=[1,1,1,0]):
         '''
@@ -163,11 +146,11 @@ class Training:
                 epoch_train_loss += loss_total.item()
 
             if weight[3] != 0:
-                for i, (x_final, label) in enumerate(self.labels_loader):
+                for i, (triplets, x_final) in enumerate(self.labels_loader):
+                    triplets = triplets.to(self.device)
                     x_final = x_final.to(self.device)
-                    label = label.to(self.device)
                     z_final = self.encoder(x_final)
-                    loss_con = self.labels_losses(z_final, label, weight)
+                    loss_con = self.labels_losses(z_final, triplets)
                     loss_contrastive += loss_con.item() * weight[3]
                     loss_con.backward()
                     optimizer.step()

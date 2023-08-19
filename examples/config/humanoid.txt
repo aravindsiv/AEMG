@@ -17,5 +17,4 @@
     'model_dir': 'models/humanoid/',
     'log_dir': 'logs/humanoid/',
     'labels_fname': 'output/humanoid_learned1k/trajectory_success_details.txt',
-    'contrastive_loss_margin': 0.5,
 }

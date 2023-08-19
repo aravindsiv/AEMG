@@ -1,3 +1,5 @@
+import torch
+
 from AEMG.systems.pendulum import Pendulum
 from AEMG.systems.ndpendulum import NdPendulum
 from AEMG.systems.cartpole import Cartpole
@@ -28,3 +30,9 @@ def get_system(name, dims=10, **kwargs):
         print("That system does not exist!")
         raise NotImplementedError
     return system
+
+def multi_dim_tensor_cartesian(a, b):
+    a_ = torch.reshape(torch.tile(a, [1, b.shape[0]]), (a.shape[0] * b.shape[0], a.shape[1]))
+    b_ = torch.tile(b, [a.shape[0], 1])
+
+    return torch.concat((a_, b_), dim=1)
