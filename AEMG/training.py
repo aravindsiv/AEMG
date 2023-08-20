@@ -99,7 +99,7 @@ class Training:
         return loss_ae1, loss_ae2, loss_dyn, loss_total
 
     def labels_losses(self, encodings, triplets):
-        contrastive_loss = self.labels_criterion(encodings[triplets[:, 0]], encodings[triplets[:, 1]], encodings[triplets[:, 2]])
+        contrastive_loss = self.labels_criterion(encodings[triplets['anchors']], encodings[triplets['positives']], encodings[triplets['negatives']])
         return contrastive_loss
 
 
@@ -147,7 +147,6 @@ class Training:
 
             if weight[3] != 0:
                 for i, (triplets, x_final) in enumerate(self.labels_loader):
-                    triplets = triplets.to(self.device)
                     x_final = x_final.to(self.device)
                     z_final = self.encoder(x_final)
                     loss_con = self.labels_losses(z_final, triplets)

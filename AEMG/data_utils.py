@@ -2,7 +2,7 @@ import AEMG
 from AEMG.systems.utils import get_system, multi_dim_tensor_cartesian
 
 import numpy as np
-from tqdm import tqdm 
+from tqdm import tqdm
 from torch.utils.data import Dataset
 from AEMG.systems.utils import get_system
 import torch
@@ -28,10 +28,10 @@ class DynamicsDataset(Dataset):
             subsampled_data = system.transform(subsampled_data_untransformed)
             Xt.append(subsampled_data[:-step])
             Xnext.append(subsampled_data[step:])
-            # for i in range(subsampled_data.shape[0] - step): 
+            # for i in range(subsampled_data.shape[0] - step):
             #     Xt.append(system.transform(subsampled_data[i]))
             #     Xnext.append(system.transform(subsampled_data[i + step]))
-            
+
         self.Xt = np.vstack(Xt)
         self.Xnext = np.vstack(Xnext)
         assert len(self.Xt) == len(self.Xnext), "Xt and Xnext must have the same length"
@@ -50,7 +50,7 @@ class DynamicsDataset(Dataset):
         # If model_dir does nto exist, create it
         if not os.path.exists(config['model_dir']):
             os.makedirs(config['model_dir'])
-        
+
         # Write the normalization parameters to a file
         np.savetxt(os.path.join(config['model_dir'], 'X_min.txt'), self.X_min, delimiter=',')
         np.savetxt(os.path.join(config['model_dir'], 'X_max.txt'), self.X_max, delimiter=',')
@@ -58,10 +58,10 @@ class DynamicsDataset(Dataset):
         # Convert to torch tensors
         self.Xt = torch.from_numpy(self.Xt).float()
         self.Xnext = torch.from_numpy(self.Xnext).float()
-    
+
     def __len__(self):
         return len(self.Xt)
-    
+
     def __getitem__(self, idx):
         return self.Xt[idx], self.Xnext[idx]
 
@@ -124,9 +124,14 @@ class LabelsDataset(Dataset):
         success_indices = success_indices[:, None]
         failure_indices = failure_indices[:, None]
 
+        # Generating the sample size for the negative anchor pairs
+        success_failure_sample_size = 10
+        num_success_failure_triplets = len(success_anchor_pairs) * success_failure_sample_size
+        failure_success_sample_size = min(num_success_failure_triplets // len(failure_anchor_pairs), len(success_indices))
+
         # Adding negative values to the positive anchor pairs
-        success_failure_triplets = multi_dim_tensor_cartesian(success_anchor_pairs, failure_indices)
-        failure_success_triplets = multi_dim_tensor_cartesian(failure_anchor_pairs, success_indices)
+        success_failure_triplets = multi_dim_tensor_cartesian(success_anchor_pairs, failure_indices[torch.randint(0, len(failure_indices), (success_failure_sample_size, ))])
+        failure_success_triplets = multi_dim_tensor_cartesian(failure_anchor_pairs, success_indices[torch.randint(0, len(success_indices), (failure_success_sample_size, ))])
 
         # Concatenating all triplets
         self.contrastive_triplets = torch.cat([success_failure_triplets, failure_success_triplets], dim=0)
@@ -143,15 +148,18 @@ class LabelsDataset(Dataset):
         unique_indices = np.unique(triplets)
         x_batch = self.final_points[unique_indices]
         orig_indices_vs_new_indices = {orig_idx: new_idx for new_idx, orig_idx in enumerate(unique_indices)}
-        # Updating the indices of the triplets to match the indices of the points in the batch
-        updated_triplets = []
-        for anchor_idx, pos_idx, neg_idx in triplets:
-            updated_anchor_idx = orig_indices_vs_new_indices[anchor_idx]
-            updated_pos_idx = orig_indices_vs_new_indices[pos_idx]
-            updated_neg_idx = orig_indices_vs_new_indices[neg_idx]
-            updated_triplets.append([updated_anchor_idx, updated_pos_idx, updated_neg_idx])
 
-        return torch.tensor(updated_triplets), x_batch
+        # Updating the indices of the triplets to match the indices of the points in the batch
+        updated_anchor_indices = []
+        updated_pos_indices = []
+        updated_neg_indices = []
+
+        for anchor_idx, pos_idx, neg_idx in triplets:
+            updated_anchor_indices.append(orig_indices_vs_new_indices[anchor_idx])
+            updated_pos_indices.append(orig_indices_vs_new_indices[pos_idx])
+            updated_neg_indices.append(orig_indices_vs_new_indices[neg_idx])
+
+        return {"anchors": updated_anchor_indices, "positives": updated_pos_indices, "negatives": updated_neg_indices}, x_batch
 
 class TrajectoryDataset:
     # Useful for plotting
@@ -189,16 +197,16 @@ class TrajectoryDataset:
                 except KeyError:
                     print("No label found for ", f)
                     self.labels.append(-1)
-    
+
     def __len__(self):
         return len(self.trajs)
-    
+
     def __getitem__(self, idx):
         return self.trajs[idx]
-    
+
     def get_label(self,index):
         return self.labels[index]
-    
+
     def get_successful_initial_conditions(self):
         assert len(self.trajs) == len(self.labels)
         initial_points = []
@@ -214,7 +222,7 @@ class TrajectoryDataset:
             if self.labels[i] == 0:
                 initial_points.append(self.trajs[i][0])
         return np.array(initial_points)
-    
+
     def get_successful_final_conditions(self):
         assert len(self.trajs) == len(self.labels)
         final_points = []
