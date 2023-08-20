@@ -1,5 +1,5 @@
 import AEMG
-from AEMG.systems.utils import get_system, multi_dim_tensor_cartesian
+from AEMG.systems.utils import get_system
 
 import numpy as np
 from tqdm import tqdm
@@ -67,6 +67,8 @@ class DynamicsDataset(Dataset):
 
 class LabelsDataset(Dataset):
     def __init__(self,config):
+        self.triplet_success_failure_sample_size = config['triplet_success_failure_sample_size']
+
         labels = np.loadtxt(config['labels_fname'], delimiter=',', dtype=str)
         labels_dict = {}
         for i in range(len(labels)):
@@ -124,8 +126,8 @@ class LabelsDataset(Dataset):
         success_indices = success_indices[:, None]
         failure_indices = failure_indices[:, None]
 
-        # Generating the sample size for the negative anchor pairs
-        success_failure_sample_size = 10
+        # Given the triplet_success_failure_sample_size, we want to generate the same number of success-failure and failure-success triplets
+        success_failure_sample_size = self.triplet_success_failure_sample_size
         num_success_failure_triplets = len(success_anchor_pairs) * success_failure_sample_size
         failure_success_sample_size = min(num_success_failure_triplets // len(failure_anchor_pairs), len(success_indices))
 
@@ -135,6 +137,8 @@ class LabelsDataset(Dataset):
 
         # Concatenating all triplets
         self.contrastive_triplets = torch.cat([success_failure_triplets, failure_success_triplets], dim=0)
+
+        print('Number of triplets: ', len(self.contrastive_triplets))
 
     def collate_fn(self, batch):
         """
@@ -238,3 +242,10 @@ class TrajectoryDataset:
             if self.labels[i] == 0:
                 final_points.append(self.trajs[i][-1])
         return np.array(final_points)
+
+
+def multi_dim_tensor_cartesian(a, b):
+    a_ = torch.reshape(torch.tile(a, [1, b.shape[0]]), (a.shape[0] * b.shape[0], a.shape[1]))
+    b_ = torch.tile(b, [a.shape[0], 1])
+
+    return torch.concat((a_, b_), dim=1)

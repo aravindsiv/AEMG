@@ -9,10 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import os
-import pdb
 
 if __name__ == "__main__":
-    print(os.getcwd() )
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment',help='Directory of results inside output/',type=str,default='pendulum_lqr1k')
     parser.add_argument('--id', type=str, default="")

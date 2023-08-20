@@ -48,7 +48,7 @@ class Training:
         self.reset_losses()
 
         self.dynamics_criterion = nn.MSELoss(reduction='mean')
-        self.labels_criterion = nn.TripletMarginLoss()
+        self.labels_criterion = nn.TripletMarginLoss(reduction='mean')
 
         self.lr = config["learning_rate"]
 
@@ -98,9 +98,9 @@ class Training:
         loss_total = loss_ae1 * weight[0] + loss_ae2 * weight[1] + loss_dyn * weight[2]
         return loss_ae1, loss_ae2, loss_dyn, loss_total
 
-    def labels_losses(self, encodings, triplets):
+    def labels_losses(self, encodings, triplets, weight):
         contrastive_loss = self.labels_criterion(encodings[triplets['anchors']], encodings[triplets['positives']], encodings[triplets['negatives']])
-        return contrastive_loss
+        return contrastive_loss * weight[3]
 
 
     def train(self, epochs=1000, patience=50, weight=[1,1,1,0]):
@@ -149,8 +149,8 @@ class Training:
                 for i, (triplets, x_final) in enumerate(self.labels_loader):
                     x_final = x_final.to(self.device)
                     z_final = self.encoder(x_final)
-                    loss_con = self.labels_losses(z_final, triplets)
-                    loss_contrastive += loss_con.item() * weight[3]
+                    loss_con = self.labels_losses(z_final, triplets, weight)
+                    loss_contrastive += loss_con.item()
                     loss_con.backward()
                     optimizer.step()
 
