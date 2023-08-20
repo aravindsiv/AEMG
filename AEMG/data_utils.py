@@ -142,13 +142,13 @@ class LabelsDataset(Dataset):
         # Getting the points present in the batch of triplets
         unique_indices = np.unique(triplets)
         x_batch = self.final_points[unique_indices]
-
+        orig_indices_vs_new_indices = {orig_idx: new_idx for new_idx, orig_idx in enumerate(unique_indices)}
         # Updating the indices of the triplets to match the indices of the points in the batch
         updated_triplets = []
         for anchor_idx, pos_idx, neg_idx in triplets:
-            updated_anchor_idx = np.where(unique_indices == anchor_idx)[0][0]
-            updated_pos_idx = np.where(unique_indices == pos_idx)[0][0]
-            updated_neg_idx = np.where(unique_indices == neg_idx)[0][0]
+            updated_anchor_idx = orig_indices_vs_new_indices[anchor_idx]
+            updated_pos_idx = orig_indices_vs_new_indices[pos_idx]
+            updated_neg_idx = orig_indices_vs_new_indices[neg_idx]
             updated_triplets.append([updated_anchor_idx, updated_pos_idx, updated_neg_idx])
 
         return torch.tensor(updated_triplets), x_batch
