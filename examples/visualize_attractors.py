@@ -90,7 +90,6 @@ if __name__ == "__main__":
             plt.scatter(zt[0], zt[1], color='r', marker='x',s=100, label='GT Attractor' if i==0 else None)
         
         all_attractor_centers = []
-        print('num attractors', mg_out_utils.get_num_attractors())
         for i in range(mg_out_utils.get_num_attractors()):
             attractor_tiles = mg_out_utils.get_corner_points_of_attractor(mg_out_utils.attractor_nodes[i])
             attractor_mean_corner_points = np.mean(attractor_tiles, axis=0)
@@ -98,7 +97,6 @@ if __name__ == "__main__":
             if args.print:
                 print("Obtained Attractor {}:".format(i))
                 print(dynamics.system.inverse_transform(dynamics.decode(attractor_center)))
-            print(attractor_tiles.shape[0])
             for j in range(attractor_tiles.shape[0]):
                 cp_low = attractor_tiles[j, :config['low_dims']]
                 cp_high = attractor_tiles[j, config['low_dims']:]
@@ -109,7 +107,6 @@ if __name__ == "__main__":
         
         if args.output_dir:
             plt.savefig(os.path.join(args.output_dir,fname+"_attractors.png"))
-            print(os.path.join(args.output_dir,fname+"_attractors.png"))
         else:
             plt.savefig(os.path.join(config['output_dir'],  "attractors.png"))
         plt.close()

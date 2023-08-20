@@ -17,5 +17,5 @@
     'model_dir': 'models/humanoid/',
     'log_dir': 'logs/humanoid/',
     'labels_fname': 'output/humanoid_learned1k/trajectory_success_details.txt',
-    'triplet_success_failure_sample_size': 10,
+    'negative_pairs_count': 10,
 }

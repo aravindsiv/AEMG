@@ -1,5 +1,3 @@
-import torch
-
 from AEMG.systems.pendulum import Pendulum
 from AEMG.systems.ndpendulum import NdPendulum
 from AEMG.systems.cartpole import Cartpole

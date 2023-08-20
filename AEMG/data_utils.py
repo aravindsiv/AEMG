@@ -67,7 +67,7 @@ class DynamicsDataset(Dataset):
 
 class LabelsDataset(Dataset):
     def __init__(self,config):
-        self.triplet_success_failure_sample_size = config['triplet_success_failure_sample_size']
+        self.negative_pairs_count = config['negative_pairs_count']
 
         labels = np.loadtxt(config['labels_fname'], delimiter=',', dtype=str)
         labels_dict = {}
@@ -127,7 +127,7 @@ class LabelsDataset(Dataset):
         failure_indices = failure_indices[:, None]
 
         # Given the triplet_success_failure_sample_size, we want to generate the same number of success-failure and failure-success triplets
-        success_failure_sample_size = self.triplet_success_failure_sample_size
+        success_failure_sample_size = self.negative_pairs_count
         num_success_failure_triplets = len(success_anchor_pairs) * success_failure_sample_size
         failure_success_sample_size = min(num_success_failure_triplets // len(failure_anchor_pairs), len(success_indices))
 
