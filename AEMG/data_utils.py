@@ -126,14 +126,19 @@ class LabelsDataset(Dataset):
         success_indices = success_indices[:, None]
         failure_indices = failure_indices[:, None]
 
-        # Given the triplet_success_failure_sample_size, we want to generate the same number of success-failure and failure-success triplets
-        success_failure_sample_size = self.negative_pairs_count
-        num_success_failure_triplets = len(success_anchor_pairs) * success_failure_sample_size
-        failure_success_sample_size = min(num_success_failure_triplets // len(failure_anchor_pairs), len(success_indices))
+        # Sampling the larger set of pairs to reduce its size to the size of the smaller set of pairs
+        if len(success_anchor_pairs) > len(failure_anchor_pairs):
+            success_anchor_pairs = success_anchor_pairs[torch.randint(0, len(success_anchor_pairs), (len(failure_anchor_pairs), ))]
+        else:
+            failure_anchor_pairs = failure_anchor_pairs[torch.randint(0, len(failure_anchor_pairs), (len(success_anchor_pairs), ))]
+
+        # Sampling the negative indices for the positive anchor pairs
+        sampled_failure_indices = failure_indices[torch.randint(0, len(failure_indices), (len(success_anchor_pairs), ))]
+        sampled_success_indices = success_indices[torch.randint(0, len(success_indices), (len(failure_anchor_pairs), ))]
 
         # Adding negative values to the positive anchor pairs
-        success_failure_triplets = multi_dim_tensor_cartesian(success_anchor_pairs, failure_indices[torch.randint(0, len(failure_indices), (success_failure_sample_size, ))])
-        failure_success_triplets = multi_dim_tensor_cartesian(failure_anchor_pairs, success_indices[torch.randint(0, len(success_indices), (failure_success_sample_size, ))])
+        success_failure_triplets = torch.cat([success_anchor_pairs, sampled_failure_indices], dim=1)
+        failure_success_triplets = torch.cat([failure_anchor_pairs, sampled_success_indices], dim=1)
 
         # Concatenating all triplets
         self.contrastive_triplets = torch.cat([success_failure_triplets, failure_success_triplets], dim=0)
