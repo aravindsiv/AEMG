@@ -67,8 +67,6 @@ class DynamicsDataset(Dataset):
 
 class LabelsDataset(Dataset):
     def __init__(self,config):
-        self.negative_pairs_count = config['negative_pairs_count']
-
         labels = np.loadtxt(config['labels_fname'], delimiter=',', dtype=str)
         labels_dict = {}
         for i in range(len(labels)):
@@ -110,6 +108,7 @@ class LabelsDataset(Dataset):
         Generates the contrastive triplets for the dataset where each triplet has the form (anchor, positive, negative)
         The anchor can be either a success or failure point, the positive is a point of the same class as the anchor, and the negative is a point of the opposite class
         """
+        rng = np.random.default_rng()
 
         # Gathering the indices of the success and failure labels
         success_indices = torch.where(self.labels == 1)[0]
@@ -128,13 +127,13 @@ class LabelsDataset(Dataset):
 
         # Sampling the larger set of pairs to reduce its size to the size of the smaller set of pairs
         if len(success_anchor_pairs) > len(failure_anchor_pairs):
-            success_anchor_pairs = success_anchor_pairs[torch.randint(0, len(success_anchor_pairs), (len(failure_anchor_pairs), ))]
+            success_anchor_pairs = success_anchor_pairs[rng.choice(len(success_anchor_pairs), size=len(failure_anchor_pairs), replace=False)]
         else:
-            failure_anchor_pairs = failure_anchor_pairs[torch.randint(0, len(failure_anchor_pairs), (len(success_anchor_pairs), ))]
+            failure_anchor_pairs = failure_anchor_pairs[rng.choice(len(failure_anchor_pairs), size=len(success_anchor_pairs), replace=False)]
 
         # Sampling the negative indices for the positive anchor pairs
-        sampled_failure_indices = failure_indices[torch.randint(0, len(failure_indices), (len(success_anchor_pairs), ))]
-        sampled_success_indices = success_indices[torch.randint(0, len(success_indices), (len(failure_anchor_pairs), ))]
+        sampled_failure_indices = failure_indices[rng.choice(len(failure_indices), size=len(success_anchor_pairs), replace=True)]
+        sampled_success_indices = success_indices[rng.choice(len(success_indices), size=len(failure_anchor_pairs), replace=True)]
 
         # Adding negative values to the positive anchor pairs
         success_failure_triplets = torch.cat([success_anchor_pairs, sampled_failure_indices], dim=1)
