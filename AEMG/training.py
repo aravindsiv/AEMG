@@ -154,11 +154,13 @@ class Training:
                     loss_con.backward()
                     optimizer.step()
 
+            epoch_train_loss = (epoch_train_loss/ len(self.dynamics_train_loader)) + (loss_contrastive / len(self.labels_loader))
+
             self.train_losses['loss_ae1'].append(loss_ae1_train / len(self.dynamics_train_loader))
             self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.dynamics_train_loader))
             self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.dynamics_train_loader))
             self.train_losses['loss_contrastive'].append(loss_contrastive / len(self.labels_loader))
-            self.train_losses['loss_total'].append(epoch_train_loss / len(self.dynamics_train_loader))
+            self.train_losses['loss_total'].append(epoch_train_loss)
 
             with torch.no_grad():
                 loss_ae1_test = 0
@@ -182,13 +184,15 @@ class Training:
                     loss_dyn_test += loss_dyn.item() * weight[2]
                     epoch_test_loss += loss_total.item()
 
+                epoch_test_loss = (epoch_test_loss/ len(self.dynamics_test_loader)) + (loss_contrastive / len(self.labels_loader))
+
                 self.test_losses['loss_ae1'].append(loss_ae1_test / len(self.dynamics_test_loader))
                 self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.dynamics_test_loader))
                 self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.dynamics_test_loader))
                 self.test_losses['loss_contrastive'].append(loss_contrastive / len(self.labels_loader))
-                self.test_losses['loss_total'].append(epoch_test_loss / len(self.dynamics_test_loader))
+                self.test_losses['loss_total'].append(epoch_test_loss)
 
-            scheduler.step(epoch_test_loss / len(self.dynamics_test_loader))
+            scheduler.step(epoch_test_loss)
             
             if epoch >= patience:
                 if np.mean(self.test_losses['loss_total'][-patience:]) > np.mean(self.test_losses['loss_total'][-patience-1:-1]):
@@ -197,4 +201,4 @@ class Training:
                     break
             
             if self.verbose:
-                print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.dynamics_train_loader), epoch_test_loss / len(self.dynamics_test_loader)))
+                print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss, epoch_test_loss))
