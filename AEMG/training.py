@@ -43,7 +43,8 @@ class Training:
 
         self.dynamics_train_loader = loaders['train_dynamics']
         self.dynamics_test_loader = loaders['test_dynamics']
-        self.labels_loader = loaders['labels']
+        self.labels_train_loader = loaders['train_labels']
+        self.labels_test_loader = loaders['test_labels']
 
         self.reset_losses()
 
@@ -117,7 +118,7 @@ class Training:
             loss_ae1_train = 0
             loss_ae2_train = 0
             loss_dyn_train = 0
-            loss_contrastive = 0
+            loss_contrastive_train = 0
 
             epoch_train_loss = 0
             epoch_test_loss  = 0
@@ -146,26 +147,27 @@ class Training:
                 epoch_train_loss += loss_total.item()
 
             if weight[3] != 0:
-                for i, (triplets, x_final) in enumerate(self.labels_loader):
+                for i, (triplets, x_final) in enumerate(self.labels_train_loader):
                     x_final = x_final.to(self.device)
                     z_final = self.encoder(x_final)
                     loss_con = self.labels_losses(z_final, triplets, weight[3])
-                    loss_contrastive += loss_con.item()
+                    loss_contrastive_train += loss_con.item()
                     loss_con.backward()
                     optimizer.step()
 
-            epoch_train_loss = (epoch_train_loss/ len(self.dynamics_train_loader)) + (loss_contrastive / len(self.labels_loader))
+            epoch_train_loss = (epoch_train_loss/ len(self.dynamics_train_loader)) + (loss_contrastive_train / len(self.labels_train_loader))
 
             self.train_losses['loss_ae1'].append(loss_ae1_train / len(self.dynamics_train_loader))
             self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.dynamics_train_loader))
             self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.dynamics_train_loader))
-            self.train_losses['loss_contrastive'].append(loss_contrastive / len(self.labels_loader))
+            self.train_losses['loss_contrastive'].append(loss_contrastive_train / len(self.labels_train_loader))
             self.train_losses['loss_total'].append(epoch_train_loss)
 
             with torch.no_grad():
                 loss_ae1_test = 0
                 loss_ae2_test = 0
                 loss_dyn_test = 0
+                loss_contrastive_test = 0
 
                 if weight_bool[0] or weight_bool[1]:  
                     self.encoder.eval() 
@@ -184,12 +186,19 @@ class Training:
                     loss_dyn_test += loss_dyn.item() * weight[2]
                     epoch_test_loss += loss_total.item()
 
-                epoch_test_loss = (epoch_test_loss/ len(self.dynamics_test_loader)) + (loss_contrastive / len(self.labels_loader))
+                if weight[3] != 0:
+                    for i, (triplets, x_final) in enumerate(self.labels_test_loader):
+                        x_final = x_final.to(self.device)
+                        z_final = self.encoder(x_final)
+                        loss_con = self.labels_losses(z_final, triplets, weight[3])
+                        loss_contrastive_test += loss_con.item()
+
+                epoch_test_loss = (epoch_test_loss/ len(self.dynamics_test_loader)) + (loss_contrastive_test / len(self.labels_test_loader))
 
                 self.test_losses['loss_ae1'].append(loss_ae1_test / len(self.dynamics_test_loader))
                 self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.dynamics_test_loader))
                 self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.dynamics_test_loader))
-                self.test_losses['loss_contrastive'].append(loss_contrastive / len(self.labels_loader))
+                self.test_losses['loss_contrastive'].append(loss_contrastive_test / len(self.labels_test_loader))
                 self.test_losses['loss_total'].append(epoch_test_loss)
 
             scheduler.step(epoch_test_loss)

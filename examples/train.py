@@ -64,20 +64,30 @@ def main():
     
     np.random.seed(config["seed"])
 
-    train_size = int(0.8*len(dynamics_dataset))
-    test_size = len(dynamics_dataset) - train_size
+    dynamics_train_size = int(0.8*len(dynamics_dataset))
+    dynamics_test_size = len(dynamics_dataset) - dynamics_train_size
 
-    dynamics_train_dataset, dynamics_test_dataset = torch.utils.data.random_split(dynamics_dataset, [train_size, test_size])
+    labels_train_size = int(0.8 * len(labels_dataset))
+    labels_test_size = len(labels_dataset) - labels_train_size
+
+    dynamics_train_dataset, dynamics_test_dataset = torch.utils.data.random_split(dynamics_dataset, [dynamics_train_size, dynamics_test_size])
     dynamics_train_loader = DataLoader(dynamics_train_dataset, batch_size=config["batch_size"], shuffle=True)
     dynamics_test_loader = DataLoader(dynamics_test_dataset, batch_size=config["batch_size"], shuffle=True)
-    labels_loader = DataLoader(labels_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
+
+    labels_train_dataset, labels_test_dataset = torch.utils.data.random_split(labels_dataset, [labels_train_size, labels_test_size])
+    labels_train_loader = DataLoader(labels_train_dataset, batch_size=config["batch_size"], shuffle=True)
+    labels_test_loader = DataLoader(labels_test_dataset, batch_size=config["batch_size"], shuffle=True)
 
     if args.verbose:
         print("Train size: ", len(dynamics_train_dataset))
         print("Test size: ", len(dynamics_test_dataset))
 
-    loaders = {'train_dynamics': dynamics_train_loader, 'test_dynamics': dynamics_test_loader,
-                'labels': labels_loader}
+    loaders = {
+        'train_dynamics': dynamics_train_loader,
+        'test_dynamics': dynamics_test_loader,
+        'train_labels': labels_train_loader,
+        'test_labels': labels_test_loader
+    }
 
     trainer = Training(config, loaders, args.verbose)
     experiment = TrainingConfig(config['experiment'])
