@@ -75,8 +75,8 @@ def main():
     dynamics_test_loader = DataLoader(dynamics_test_dataset, batch_size=config["batch_size"], shuffle=True)
 
     labels_train_dataset, labels_test_dataset = torch.utils.data.random_split(labels_dataset, [labels_train_size, labels_test_size])
-    labels_train_loader = DataLoader(labels_train_dataset, batch_size=config["batch_size"], shuffle=True)
-    labels_test_loader = DataLoader(labels_test_dataset, batch_size=config["batch_size"], shuffle=True)
+    labels_train_loader = DataLoader(labels_train_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
+    labels_test_loader = DataLoader(labels_test_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
 
     if args.verbose:
         print("Train size: ", len(dynamics_train_dataset))
