@@ -27,13 +27,20 @@ class TrainingConfig:
         return len(self.weights)
 
 class LabelsLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, reduction='mean'):
         super(LabelsLoss, self).__init__()
+        self.reduction = reduction
 
     def forward(self, x, y):
-        l2_norm = torch.mean(torch.linalg.vector_norm(x - y, ord=2, dim=1))
+        l2_norm = torch.linalg.vector_norm(x - y, ord=2, dim=1)
         loss = 1 - torch.tanh(l2_norm)
-        return loss
+
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:
+            raise ValueError("Invalid reduction type")
 
 class Training:
     def __init__(self, config, loaders, verbose):
@@ -58,7 +65,7 @@ class Training:
         self.reset_losses()
 
         self.dynamics_criterion = nn.MSELoss(reduction='mean')
-        self.labels_criterion = LabelsLoss()
+        self.labels_criterion = LabelsLoss(reduction='mean')
 
         self.lr = config["learning_rate"]
 
