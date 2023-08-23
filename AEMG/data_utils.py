@@ -2,7 +2,7 @@ import AEMG
 from AEMG.systems.utils import get_system
 
 import numpy as np
-from tqdm import tqdm 
+from tqdm import tqdm
 from torch.utils.data import Dataset
 from AEMG.systems.utils import get_system
 import torch
@@ -28,10 +28,10 @@ class DynamicsDataset(Dataset):
             subsampled_data = system.transform(subsampled_data_untransformed)
             Xt.append(subsampled_data[:-step])
             Xnext.append(subsampled_data[step:])
-            # for i in range(subsampled_data.shape[0] - step): 
+            # for i in range(subsampled_data.shape[0] - step):
             #     Xt.append(system.transform(subsampled_data[i]))
             #     Xnext.append(system.transform(subsampled_data[i + step]))
-            
+
         self.Xt = np.vstack(Xt)
         self.Xnext = np.vstack(Xnext)
         assert len(self.Xt) == len(self.Xnext), "Xt and Xnext must have the same length"
@@ -50,7 +50,7 @@ class DynamicsDataset(Dataset):
         # If model_dir does nto exist, create it
         if not os.path.exists(config['model_dir']):
             os.makedirs(config['model_dir'])
-        
+
         # Write the normalization parameters to a file
         np.savetxt(os.path.join(config['model_dir'], 'X_min.txt'), self.X_min, delimiter=',')
         np.savetxt(os.path.join(config['model_dir'], 'X_max.txt'), self.X_max, delimiter=',')
@@ -58,10 +58,10 @@ class DynamicsDataset(Dataset):
         # Convert to torch tensors
         self.Xt = torch.from_numpy(self.Xt).float()
         self.Xnext = torch.from_numpy(self.Xnext).float()
-    
+
     def __len__(self):
         return len(self.Xt)
-    
+
     def __getitem__(self, idx):
         return self.Xt[idx], self.Xnext[idx]
 
@@ -82,7 +82,7 @@ class LabelsDataset(Dataset):
                 self.labels.append(labels_dict[f])
             except KeyError:
                 print("No label found for ", f)
-                self.labels.append(-1)
+                self.labels.append(0)
 
         self.final_points = np.array(self.final_points)
         system = get_system(config['system'], config['high_dims'])
@@ -95,12 +95,52 @@ class LabelsDataset(Dataset):
         self.labels = np.array(self.labels)
         self.labels = torch.from_numpy(self.labels).long()
 
+        self.generate_opposite_pairs()
+
     def __len__(self):
-        return len(self.final_points)
+        return len(self.opposite_pairs)
 
     def __getitem__(self, idx):
-        return self.final_points[idx], self.labels[idx]         
-            
+        return self.opposite_pairs[idx]
+
+    def generate_opposite_pairs(self):
+        """
+        Generates the opposite pairs where each pair has the form (success, failure)
+        """
+
+        # Gathering the indices of the success and failure labels
+        success_indices = torch.where(self.labels == 1)[0]
+        failure_indices = torch.where(self.labels == 0)[0]
+
+        # Generating cartesian product of success and failure indices
+        self.opposite_pairs = torch.stack(torch.meshgrid(success_indices, failure_indices)).T.reshape(-1,2)
+
+        print('Number of pairs: ', len(self.opposite_pairs))
+
+
+    def collate_fn(self, batch):
+        """
+        Processes the batch of pairs to create a batch of points present in the pairs and a new batch of pairs is created with the updated indices of the points
+        :param batch: batch of pairs of the form [success, failure]
+        :return: updated batch of pairs and the batch of points
+        """
+        pairs = np.array([pair.to('cpu').numpy() for pair in batch])
+
+        # Getting the points present in the batch of pairs
+        unique_indices = np.unique(pairs)
+        x_batch = self.final_points[unique_indices]
+        orig_indices_vs_new_indices = {orig_idx: new_idx for new_idx, orig_idx in enumerate(unique_indices)}
+
+        # Updating the indices of the triplets to match the indices of the points in the batch
+        updated_success_indices = []
+        updated_failure_indices = []
+
+        for success_idx, failure_idx in pairs:
+            updated_success_indices.append(orig_indices_vs_new_indices[success_idx])
+            updated_failure_indices.append(orig_indices_vs_new_indices[failure_idx])
+
+        return {"successes": updated_success_indices, "failures": updated_failure_indices}, x_batch
+
 class TrajectoryDataset:
     # Useful for plotting
     def __init__(self, config, labels_fname=None):
@@ -137,16 +177,16 @@ class TrajectoryDataset:
                 except KeyError:
                     print("No label found for ", f)
                     self.labels.append(-1)
-    
+
     def __len__(self):
         return len(self.trajs)
-    
+
     def __getitem__(self, idx):
         return self.trajs[idx]
-    
+
     def get_label(self,index):
         return self.labels[index]
-    
+
     def get_successful_initial_conditions(self):
         assert len(self.trajs) == len(self.labels)
         initial_points = []
@@ -162,7 +202,7 @@ class TrajectoryDataset:
             if self.labels[i] == 0:
                 initial_points.append(self.trajs[i][0])
         return np.array(initial_points)
-    
+
     def get_successful_final_conditions(self):
         assert len(self.trajs) == len(self.labels)
         final_points = []

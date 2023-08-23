@@ -48,7 +48,6 @@ if __name__ == "__main__":
             attractors = trajectories.get_attracting_final_points()
     
     for fname in tqdm(config_fnames):
-
         config_fname = os.path.join("output",args.experiment,fname, "config.txt")
 
         with open(config_fname, 'r') as f:
