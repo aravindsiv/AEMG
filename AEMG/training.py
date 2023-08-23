@@ -26,6 +26,15 @@ class TrainingConfig:
     def __len__(self):
         return len(self.weights)
 
+class LabelsLoss(nn.Module):
+    def __init__(self):
+        super(LabelsLoss, self).__init__()
+
+    def forward(self, x, y):
+        l2_norm = torch.linalg.vector_norm(x - y, ord=2)
+        loss = 1 - torch.tanh(l2_norm)
+        return loss
+
 class Training:
     def __init__(self, config, loaders, verbose):
         self.encoder = Encoder(config)
@@ -49,7 +58,7 @@ class Training:
         self.reset_losses()
 
         self.dynamics_criterion = nn.MSELoss(reduction='mean')
-        self.labels_criterion = nn.TripletMarginLoss(reduction='mean')
+        self.labels_criterion = LabelsLoss()
 
         self.lr = config["learning_rate"]
 
@@ -99,9 +108,8 @@ class Training:
         loss_total = loss_ae1 * weight[0] + loss_ae2 * weight[1] + loss_dyn * weight[2]
         return loss_ae1, loss_ae2, loss_dyn, loss_total
 
-    def labels_losses(self, encodings, triplets, weight):
-        contrastive_loss = self.labels_criterion(encodings[triplets['anchors']], encodings[triplets['positives']], encodings[triplets['negatives']])
-        return contrastive_loss * weight
+    def labels_losses(self, encodings, pairs, weight):
+        return self.labels_criterion(encodings[pairs['successes']], encodings[pairs['failures']]) * weight
 
 
     def train(self, epochs=1000, patience=50, weight=[1,1,1,0]):
@@ -147,10 +155,10 @@ class Training:
                 epoch_train_loss += loss_total.item()
 
             if weight[3] != 0:
-                for i, (triplets, x_final) in enumerate(self.labels_train_loader):
+                for i, (pairs, x_final) in enumerate(self.labels_train_loader):
                     x_final = x_final.to(self.device)
                     z_final = self.encoder(x_final)
-                    loss_con = self.labels_losses(z_final, triplets, weight[3])
+                    loss_con = self.labels_losses(z_final, pairs, weight[3])
                     loss_contrastive_train += loss_con.item()
                     loss_con.backward()
                     optimizer.step()
@@ -187,10 +195,10 @@ class Training:
                     epoch_test_loss += loss_total.item()
 
                 if weight[3] != 0:
-                    for i, (triplets, x_final) in enumerate(self.labels_test_loader):
+                    for i, (pairs, x_final) in enumerate(self.labels_test_loader):
                         x_final = x_final.to(self.device)
                         z_final = self.encoder(x_final)
-                        loss_con = self.labels_losses(z_final, triplets, weight[3])
+                        loss_con = self.labels_losses(z_final, pairs, weight[3])
                         loss_contrastive_test += loss_con.item()
 
                 epoch_test_loss = (epoch_test_loss/ len(self.dynamics_test_loader)) + (loss_contrastive_test / len(self.labels_test_loader))

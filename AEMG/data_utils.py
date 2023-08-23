@@ -95,79 +95,53 @@ class LabelsDataset(Dataset):
         self.labels = np.array(self.labels)
         self.labels = torch.from_numpy(self.labels).long()
 
-        self.generate_contrastive_triplets()
+        self.generate_opposite_pairs()
 
     def __len__(self):
-        return len(self.contrastive_triplets)
+        return len(self.opposite_pairs)
 
     def __getitem__(self, idx):
-        return self.contrastive_triplets[idx]
+        return self.opposite_pairs[idx]
 
-    def generate_contrastive_triplets(self):
+    def generate_opposite_pairs(self):
         """
-        Generates the contrastive triplets for the dataset where each triplet has the form (anchor, positive, negative)
-        The anchor can be either a success or failure point, the positive is a point of the same class as the anchor, and the negative is a point of the opposite class
+        Generates the opposite pairs where each pair has the form (success, failure)
         """
-        rng = np.random.default_rng()
 
         # Gathering the indices of the success and failure labels
         success_indices = torch.where(self.labels == 1)[0]
         failure_indices = torch.where(self.labels == 0)[0]
 
-        # Generating all possible combinations of success and failure indices for positive anchor pairs
-        success_anchor_pairs = torch.stack(torch.meshgrid(success_indices, success_indices)).T.reshape(-1,2)
-        failure_anchor_pairs = torch.stack(torch.meshgrid(failure_indices, failure_indices)).T.reshape(-1,2)
+        # Generating cartesian product of success and failure indices
+        success_failure_pairs = torch.stack(torch.meshgrid(success_indices, failure_indices)).T.reshape(-1,2)
 
-        # Removing instances with the same index
-        success_anchor_pairs = success_anchor_pairs[success_anchor_pairs[:, 0] != success_anchor_pairs[:, 1]]
-        failure_anchor_pairs = failure_anchor_pairs[failure_anchor_pairs[:, 0] != failure_anchor_pairs[:, 1]]
+        self.opposite_pairs = success_failure_pairs
 
-        success_indices = success_indices[:, None]
-        failure_indices = failure_indices[:, None]
+        print('Number of pairs: ', len(self.opposite_pairs))
 
-        # Sampling the larger set of pairs to reduce its size to the size of the smaller set of pairs
-        if len(success_anchor_pairs) > len(failure_anchor_pairs):
-            success_anchor_pairs = success_anchor_pairs[rng.choice(len(success_anchor_pairs), size=len(failure_anchor_pairs), replace=False)]
-        else:
-            failure_anchor_pairs = failure_anchor_pairs[rng.choice(len(failure_anchor_pairs), size=len(success_anchor_pairs), replace=False)]
-
-        # Sampling the negative indices for the positive anchor pairs
-        sampled_failure_indices = failure_indices[rng.choice(len(failure_indices), size=len(success_anchor_pairs), replace=True)]
-        sampled_success_indices = success_indices[rng.choice(len(success_indices), size=len(failure_anchor_pairs), replace=True)]
-
-        # Adding negative values to the positive anchor pairs
-        success_failure_triplets = torch.cat([success_anchor_pairs, sampled_failure_indices], dim=1)
-        failure_success_triplets = torch.cat([failure_anchor_pairs, sampled_success_indices], dim=1)
-
-        # Concatenating all triplets
-        self.contrastive_triplets = torch.cat([success_failure_triplets, failure_success_triplets], dim=0)
-
-        print('Number of triplets: ', len(self.contrastive_triplets))
 
     def collate_fn(self, batch):
         """
-        Processes the batch of triplets to create a batch of points present in the triplets and a new batch of triplets is created with the updated indices of the points
-        :param batch: batch of triplets
-        :return: updated batch of triplets and the batch of points
+        Processes the batch of pairs to create a batch of points present in the pairs and a new batch of pairs is created with the updated indices of the points
+        :param batch: batch of pairs of the form [success, failure]
+        :return: updated batch of pairs and the batch of points
         """
-        triplets = np.array([triplet.to('cpu').numpy() for triplet in batch])
+        pairs = np.array([pair.to('cpu').numpy() for pair in batch])
 
-        # Getting the points present in the batch of triplets
-        unique_indices = np.unique(triplets)
+        # Getting the points present in the batch of pairs
+        unique_indices = np.unique(pairs)
         x_batch = self.final_points[unique_indices]
         orig_indices_vs_new_indices = {orig_idx: new_idx for new_idx, orig_idx in enumerate(unique_indices)}
 
         # Updating the indices of the triplets to match the indices of the points in the batch
-        updated_anchor_indices = []
-        updated_pos_indices = []
-        updated_neg_indices = []
+        updated_success_indices = []
+        updated_failure_indices = []
 
-        for anchor_idx, pos_idx, neg_idx in triplets:
-            updated_anchor_indices.append(orig_indices_vs_new_indices[anchor_idx])
-            updated_pos_indices.append(orig_indices_vs_new_indices[pos_idx])
-            updated_neg_indices.append(orig_indices_vs_new_indices[neg_idx])
+        for success_idx, failure_idx in pairs:
+            updated_success_indices.append(orig_indices_vs_new_indices[success_idx])
+            updated_failure_indices.append(orig_indices_vs_new_indices[failure_idx])
 
-        return {"anchors": updated_anchor_indices, "positives": updated_pos_indices, "negatives": updated_neg_indices}, x_batch
+        return {"successes": updated_success_indices, "failures": updated_failure_indices}, x_batch
 
 class TrajectoryDataset:
     # Useful for plotting
