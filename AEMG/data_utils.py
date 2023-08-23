@@ -113,9 +113,7 @@ class LabelsDataset(Dataset):
         failure_indices = torch.where(self.labels == 0)[0]
 
         # Generating cartesian product of success and failure indices
-        success_failure_pairs = torch.stack(torch.meshgrid(success_indices, failure_indices)).T.reshape(-1,2)
-
-        self.opposite_pairs = success_failure_pairs
+        self.opposite_pairs = torch.stack(torch.meshgrid(success_indices, failure_indices)).T.reshape(-1,2)
 
         print('Number of pairs: ', len(self.opposite_pairs))
 
@@ -220,10 +218,3 @@ class TrajectoryDataset:
             if self.labels[i] == 0:
                 final_points.append(self.trajs[i][-1])
         return np.array(final_points)
-
-
-def multi_dim_tensor_cartesian(a, b):
-    a_ = torch.reshape(torch.tile(a, [1, b.shape[0]]), (a.shape[0] * b.shape[0], a.shape[1]))
-    b_ = torch.tile(b, [a.shape[0], 1])
-
-    return torch.concat((a_, b_), dim=1)

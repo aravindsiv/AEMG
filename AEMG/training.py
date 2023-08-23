@@ -31,7 +31,7 @@ class LabelsLoss(nn.Module):
         super(LabelsLoss, self).__init__()
 
     def forward(self, x, y):
-        l2_norm = torch.linalg.vector_norm(x - y, ord=2)
+        l2_norm = torch.mean(torch.linalg.vector_norm(x - y, ord=2, dim=1))
         loss = 1 - torch.tanh(l2_norm)
         return loss
 
