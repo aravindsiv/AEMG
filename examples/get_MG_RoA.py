@@ -131,7 +131,7 @@ def main(args, config, experiment_name):
 
     else: # sample from trajectories (ideal for large trajectory set)
         dataset = DynamicsDataset(config)
-        latent_space_sample = dyn_utils.encode(dataset.Xt.numpy())
+        latent_space_sample = dyn_utils.encode(dataset.Xt.numpy(), normalize=False)
 
     latent_space_sample = dyn_utils.encode(original_space_sample)
     print("data on the latent space", latent_space_sample.shape)
@@ -144,7 +144,7 @@ def main(args, config, experiment_name):
 
     phase_periodic = [False, False]
 
-    K = [1.1]*2
+    K = [1.1] * dim_latent_space
     def F(rect):
         return MG_util.BoxMapK_valid(g, rect, K, valid_grid_latent_space, grid.point2cell)
 
