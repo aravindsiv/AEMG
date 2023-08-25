@@ -1,4 +1,4 @@
-from AEMG.data_utils import DynamicsDataset
+from AEMG.data_utils import DynamicsDataset, LabelsDataset
 from AEMG.models import *
 from AEMG.training import Training, TrainingConfig
 
@@ -23,7 +23,7 @@ def check_collapse(encoder, dataset):
 
     test_freq = int(min(10000, (len(dataset)-dim_low)/dim_low))
 
-    # train_dataset = np.random.shuffle(train_dataset)
+    # dynamics_train_dataset = np.random.shuffle(dynamics_train_dataset)
     for test_index in range(test_freq):
 
         matrix3 = np.array([encoder(dataset[i + test_index * dim_low][0]).detach().numpy() for i in range(dim_low+1)])        
@@ -47,7 +47,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_dir',help='Directory of config files',type=str,default='config/')
     parser.add_argument('--config',help='Config file inside config_dir',type=str,default='bistable.txt')
-    parser.add_argument('--verbose',help='Print training output',type=int,default=1)
+    parser.add_argument('--verbose',help='Print training output',action='store_true')
     parser.add_argument('--collapse',help='Check for collapse',action='store_true')
 
 
@@ -59,24 +59,37 @@ def main():
     
     torch.manual_seed(config["seed"])
     
-    dataset = DynamicsDataset(config)
+    dynamics_dataset = DynamicsDataset(config)
+    labels_dataset = LabelsDataset(config)
     
     np.random.seed(config["seed"])
 
-    train_size = int(0.8*len(dataset))
-    test_size = len(dataset) - train_size
+    dynamics_train_size = int(0.8*len(dynamics_dataset))
+    dynamics_test_size = len(dynamics_dataset) - dynamics_train_size
 
-    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
-    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=True)
+    labels_train_size = int(0.8 * len(labels_dataset))
+    labels_test_size = len(labels_dataset) - labels_train_size
+
+    dynamics_train_dataset, dynamics_test_dataset = torch.utils.data.random_split(dynamics_dataset, [dynamics_train_size, dynamics_test_size])
+    dynamics_train_loader = DataLoader(dynamics_train_dataset, batch_size=config["batch_size"], shuffle=True)
+    dynamics_test_loader = DataLoader(dynamics_test_dataset, batch_size=config["batch_size"], shuffle=True)
+
+    labels_train_dataset, labels_test_dataset = torch.utils.data.random_split(labels_dataset, [labels_train_size, labels_test_size])
+    labels_train_loader = DataLoader(labels_train_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
+    labels_test_loader = DataLoader(labels_test_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
 
     if args.verbose:
-        print("Train size: ", len(train_dataset))
-        print("Test size: ", len(test_dataset))
+        print("Train size: ", len(dynamics_train_dataset))
+        print("Test size: ", len(dynamics_test_dataset))
 
-    loaders = {'train': train_loader, 'test': test_loader}
+    loaders = {
+        'train_dynamics': dynamics_train_loader,
+        'test_dynamics': dynamics_test_loader,
+        'train_labels': labels_train_loader,
+        'test_labels': labels_test_loader
+    }
 
-    trainer = Training(config, loaders, bool(int(args.verbose)))
+    trainer = Training(config, loaders, args.verbose)
     experiment = TrainingConfig(config['experiment'])
 
     for i,exp in enumerate(experiment):
@@ -88,7 +101,7 @@ def main():
 
 
     if args.collapse:
-        check_collapse(trainer.encoder, train_dataset)
+        check_collapse(trainer.encoder, dynamics_train_dataset)
     trainer.save_models()    
 
 if __name__ == "__main__":

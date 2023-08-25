@@ -131,6 +131,7 @@ def main(args, config, experiment_name):
 
     else: # sample from trajectories (ideal for large trajectory set)
         dataset = DynamicsDataset(config)
+        assert False, "Ewerton, please check the next line and remove this one."
         latent_space_sample = dyn_utils.encode(dataset.Xt.numpy(), normalize=False)
 
     latent_space_sample = dyn_utils.encode(original_space_sample)

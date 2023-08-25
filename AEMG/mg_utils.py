@@ -69,21 +69,21 @@ class MorseGraphOutputProcessor:
         attractor_nodes = self.attractor_nodes_data[self.attractor_nodes_data[:, 1] == id]
         return attractor_nodes[:, 2:]        
 
-    def get_corner_points_of_morse_set(self, id):
-        morse_set_nodes = self.morse_nodes_data[self.morse_nodes_data[:, 1] == id]
-        return morse_set_nodes[:, 2:]
+    def get_corner_points_of_morse_node(self, id):
+        morse_node_nodes = self.morse_nodes_data[self.morse_nodes_data[:, 1] == id]
+        return morse_node_nodes[:, 2:]
     
-    def which_morse_set(self, point):
+    def which_morse_node(self, point):
         assert point.shape[0] == self.dims
         for i in range(self.morse_nodes_data.shape[0]):
             corner_point_low  = self.morse_nodes_data[i, 2:2+self.dims]
             corner_point_high = self.morse_nodes_data[i, 2+self.dims:]
             if np.all(point >= corner_point_low) and np.all(point <= corner_point_high):
-                return self.morse_nodes_data[i, 1]
+                return int(self.morse_nodes_data[i, 1])
         for i in range(self.attractor_nodes_data.shape[0]):
             corner_point_low  = self.attractor_nodes_data[i, 2:2+self.dims]
             corner_point_high = self.attractor_nodes_data[i, 2+self.dims:]
             if np.all(point >= corner_point_low) and np.all(point <= corner_point_high):
-                return self.attractor_nodes_data[i, 1]
+                return int(self.attractor_nodes_data[i, 1])
         return -1
         

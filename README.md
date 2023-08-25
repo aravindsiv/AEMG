@@ -10,5 +10,3 @@ pip install -e .
 
 ## Usage
 The `examples` directory contains an example of how to collect data and train an autoencoder for a pendulum system defined in ML4KP. 
-
-`mg_utils.py` contains the necessary functions to construct the MG.

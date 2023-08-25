@@ -16,8 +16,8 @@ class TrainingConfig:
         self.weights = []
         for _, id in enumerate(ids):
             self.weights.append([float(e) for e in id.split('x')[:-1]])
-            if len(self.weights[-1]) != 3:
-                print("Expected 3 values per training config, got ", len(self.weights[-1]))
+            if len(self.weights[-1]) != 4:
+                print("Expected 4 values per training config, got ", len(self.weights[-1]))
                 raise ValueError
     
     def __getitem__(self, key):
@@ -25,6 +25,22 @@ class TrainingConfig:
     
     def __len__(self):
         return len(self.weights)
+
+class LabelsLoss(nn.Module):
+    def __init__(self, reduction='mean'):
+        super(LabelsLoss, self).__init__()
+        self.reduction = reduction
+
+    def forward(self, x, y):
+        l2_norm = torch.linalg.vector_norm(x - y, ord=2, dim=1)
+        loss = 1 - torch.tanh(l2_norm)
+
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:
+            raise ValueError("Invalid reduction type")
 
 class Training:
     def __init__(self, config, loaders, verbose):
@@ -41,12 +57,16 @@ class Training:
         self.dynamics.to(self.device)
         self.decoder.to(self.device)
 
-        self.train_loader = loaders['train']
-        self.test_loader = loaders['test']
+        self.dynamics_train_loader = loaders['train_dynamics']
+        self.dynamics_test_loader = loaders['test_dynamics']
+        self.labels_train_loader = loaders['train_labels']
+        self.labels_test_loader = loaders['test_labels']
 
         self.reset_losses()
 
-        self.criterion = nn.MSELoss(reduction='mean')
+        self.dynamics_criterion = nn.MSELoss(reduction='mean')
+        self.labels_criterion = LabelsLoss(reduction='mean')
+
         self.lr = config["learning_rate"]
 
         self.model_dir = config["model_dir"]
@@ -68,8 +88,8 @@ class Training:
             pickle.dump(self.test_losses, f)
     
     def reset_losses(self):
-        self.train_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_total': []}
-        self.test_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_total': []}
+        self.train_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_contrastive': [], 'loss_total': []}
+        self.test_losses = {'loss_ae1': [], 'loss_ae2': [], 'loss_dyn': [], 'loss_contrastive': [], 'loss_total': []}
     
     def forward(self, x_t, x_tau):
         x_t = x_t.to(self.device)
@@ -86,29 +106,34 @@ class Training:
 
         return (x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn)
 
-    def losses(self, foward_pass, weight):
-        x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn = foward_pass
+    def dynamics_losses(self, forward_pass, weight):
+        x_t, x_tau, x_t_pred, z_tau, z_tau_pred, x_tau_pred_dyn = forward_pass
 
-        loss_ae1 = self.criterion(x_t, x_t_pred)
-        loss_ae2 = self.criterion(x_tau, x_tau_pred_dyn)
-        loss_dyn = self.criterion(z_tau_pred, z_tau)
+        loss_ae1 = self.dynamics_criterion(x_t, x_t_pred)
+        loss_ae2 = self.dynamics_criterion(x_tau, x_tau_pred_dyn)
+        loss_dyn = self.dynamics_criterion(z_tau_pred, z_tau)
         loss_total = loss_ae1 * weight[0] + loss_ae2 * weight[1] + loss_dyn * weight[2]
         return loss_ae1, loss_ae2, loss_dyn, loss_total
 
-    def train(self, epochs=1000, patience=50, weight=[1,1,1]):
+    def labels_losses(self, encodings, pairs, weight):
+        return self.labels_criterion(encodings[pairs['successes']], encodings[pairs['failures']]) * weight
+
+
+    def train(self, epochs=1000, patience=50, weight=[1,1,1,0]):
         '''
         Function that trains all the models with all the losses and weight.
         It will stop if the test loss does not improve for "patience" epochs.
         '''
         weight_bool = [bool(i) for i in weight]
-        list_parameters = (weight_bool[0] or weight_bool[1]) * (list(self.encoder.parameters()) + list(self.decoder.parameters()))
-        list_parameters += weight_bool[2] * list(self.dynamics.parameters())
+        list_parameters = (weight_bool[0] or weight_bool[1] or weight_bool[2]) * (list(self.encoder.parameters()) + list(self.decoder.parameters()))
+        list_parameters += (weight_bool[1] or weight_bool[2]) * list(self.dynamics.parameters())
         optimizer = torch.optim.Adam(list_parameters, lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=0.001, patience=patience, verbose=True)
         for epoch in tqdm(range(epochs)):
             loss_ae1_train = 0
             loss_ae2_train = 0
             loss_dyn_train = 0
+            loss_contrastive_train = 0
 
             epoch_train_loss = 0
             epoch_test_loss  = 0
@@ -120,13 +145,13 @@ class Training:
             if weight_bool[2]: 
                 self.dynamics.train()
 
-            for i, (x_t, x_tau) in enumerate(self.train_loader):
+            for i, (x_t, x_tau) in enumerate(self.dynamics_train_loader):
                 optimizer.zero_grad()
 
                 # Forward pass
                 forward_pass = self.forward(x_t, x_tau)
                 # Compute losses
-                loss_ae1, loss_ae2, loss_dyn, loss_total = self.losses(forward_pass, weight)
+                loss_ae1, loss_ae2, loss_dyn, loss_total = self.dynamics_losses(forward_pass, weight)
                 # Backward pass
                 loss_total.backward()
                 optimizer.step()
@@ -136,15 +161,28 @@ class Training:
                 loss_dyn_train += loss_dyn.item() * weight[2]
                 epoch_train_loss += loss_total.item()
 
-            self.train_losses['loss_ae1'].append(loss_ae1_train / len(self.train_loader))
-            self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.train_loader))
-            self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.train_loader))
-            self.train_losses['loss_total'].append(epoch_train_loss / len(self.train_loader))
+            if weight[3] != 0:
+                for i, (pairs, x_final) in enumerate(self.labels_train_loader):
+                    x_final = x_final.to(self.device)
+                    z_final = self.encoder(x_final)
+                    loss_con = self.labels_losses(z_final, pairs, weight[3])
+                    loss_contrastive_train += loss_con.item()
+                    loss_con.backward()
+                    optimizer.step()
+
+            epoch_train_loss = (epoch_train_loss/ len(self.dynamics_train_loader)) + (loss_contrastive_train / len(self.labels_train_loader))
+
+            self.train_losses['loss_ae1'].append(loss_ae1_train / len(self.dynamics_train_loader))
+            self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.dynamics_train_loader))
+            self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.dynamics_train_loader))
+            self.train_losses['loss_contrastive'].append(loss_contrastive_train / len(self.labels_train_loader))
+            self.train_losses['loss_total'].append(epoch_train_loss)
 
             with torch.no_grad():
                 loss_ae1_test = 0
                 loss_ae2_test = 0
                 loss_dyn_test = 0
+                loss_contrastive_test = 0
 
                 if weight_bool[0] or weight_bool[1]:  
                     self.encoder.eval() 
@@ -152,23 +190,33 @@ class Training:
                 if weight_bool[2]: 
                     self.dynamics.eval()
 
-                for i, (x_t, x_tau) in enumerate(self.test_loader):
+                for i, (x_t, x_tau) in enumerate(self.dynamics_test_loader):
                     # Forward pass
                     forward_pass = self.forward(x_t, x_tau)
                     # Compute losses
-                    loss_ae1, loss_ae2, loss_dyn, loss_total = self.losses(forward_pass, weight)
+                    loss_ae1, loss_ae2, loss_dyn, loss_total = self.dynamics_losses(forward_pass, weight)
 
                     loss_ae1_test += loss_ae1.item() * weight[0]
                     loss_ae2_test += loss_ae2.item() * weight[1]
                     loss_dyn_test += loss_dyn.item() * weight[2]
                     epoch_test_loss += loss_total.item()
 
-                self.test_losses['loss_ae1'].append(loss_ae1_test / len(self.test_loader))
-                self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.test_loader))
-                self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.test_loader))
-                self.test_losses['loss_total'].append(epoch_test_loss / len(self.test_loader))
+                if weight[3] != 0:
+                    for i, (pairs, x_final) in enumerate(self.labels_test_loader):
+                        x_final = x_final.to(self.device)
+                        z_final = self.encoder(x_final)
+                        loss_con = self.labels_losses(z_final, pairs, weight[3])
+                        loss_contrastive_test += loss_con.item()
 
-            scheduler.step(epoch_test_loss / len(self.test_loader))
+                epoch_test_loss = (epoch_test_loss/ len(self.dynamics_test_loader)) + (loss_contrastive_test / len(self.labels_test_loader))
+
+                self.test_losses['loss_ae1'].append(loss_ae1_test / len(self.dynamics_test_loader))
+                self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.dynamics_test_loader))
+                self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.dynamics_test_loader))
+                self.test_losses['loss_contrastive'].append(loss_contrastive_test / len(self.labels_test_loader))
+                self.test_losses['loss_total'].append(epoch_test_loss)
+
+            scheduler.step(epoch_test_loss)
             
             if epoch >= patience:
                 if np.mean(self.test_losses['loss_total'][-patience:]) > np.mean(self.test_losses['loss_total'][-patience-1:-1]):
@@ -177,4 +225,4 @@ class Training:
                     break
             
             if self.verbose:
-                print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss / len(self.train_loader), epoch_test_loss / len(self.test_loader)))
+                print('Epoch [{}/{}], Train Loss: {:.4f}, Test Loss: {:.4f}'.format(epoch + 1, epochs, epoch_train_loss, epoch_test_loss))
