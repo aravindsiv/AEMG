@@ -11,7 +11,7 @@
     'batch_size': 1024,
     'learning_rate': 0.001,
     'seed': 0, 
-    'experiment': '1x1x1x1x', 
+    'experiment': '500x1x1x1x', 
     'num_layers': 2, 
     'data_dir': 'data/pendulum_lqr1k/',
     'labels_fname': 'data/pendulum_lqr1k_success.txt',

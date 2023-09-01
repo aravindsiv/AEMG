@@ -143,7 +143,7 @@ class LabelsDataset(Dataset):
 
 class TrajectoryDataset:
     # Useful for plotting
-    def __init__(self, config, labels_fname=None):
+    def __init__(self, config):
         self.trajs = []
         subsample = config['subsample']
 
@@ -152,6 +152,9 @@ class TrajectoryDataset:
 
         self.labels_dict = {}
         self.labels = []
+
+        labels_fname = config['labels_fname']
+
         if labels_fname is not None:
             labels = np.loadtxt(labels_fname, delimiter=',', dtype=str)
             # Create dict with key as fname and value as label
