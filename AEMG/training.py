@@ -30,10 +30,11 @@ class LabelsLoss(nn.Module):
     def __init__(self, reduction='mean'):
         super(LabelsLoss, self).__init__()
         self.reduction = reduction
+        self.scale = 100.0
 
     def forward(self, x, y):
-        l2_norm = torch.linalg.vector_norm(x - y, ord=2, dim=1)
-        loss = 1 - torch.tanh(l2_norm)
+        pairwise_distance = torch.linalg.vector_norm(x - y, ord=2, dim=1)
+        loss = torch.sigmoid(-self.scale * pairwise_distance)
 
         if self.reduction == 'mean':
             return loss.mean()
@@ -139,43 +140,42 @@ class Training:
             epoch_test_loss  = 0
 
 
-            if weight_bool[0] or weight_bool[1]: 
+            if weight_bool[0] or weight_bool[1] or weight_bool[2]: 
                 self.encoder.train() 
                 self.decoder.train() 
-            if weight_bool[2]: 
+            if weight_bool[1] or weight_bool[2]: 
                 self.dynamics.train()
 
-            for i, (x_t, x_tau) in enumerate(self.dynamics_train_loader):
+            num_batches = min(len(self.dynamics_train_loader), len(self.labels_train_loader))
+            for (x_t, x_tau), (pairs, x_final) in zip(self.dynamics_train_loader, self.labels_train_loader):
                 optimizer.zero_grad()
 
                 # Forward pass
                 forward_pass = self.forward(x_t, x_tau)
                 # Compute losses
                 loss_ae1, loss_ae2, loss_dyn, loss_total = self.dynamics_losses(forward_pass, weight)
+                loss_con = 0
+                if weight[3] != 0:
+                    x_final = x_final.to(self.device)
+                    z_final = self.encoder(x_final)
+                    loss_con = self.labels_losses(z_final, pairs, weight[3])
+                    loss_total += loss_con
                 # Backward pass
                 loss_total.backward()
                 optimizer.step()
 
-                loss_ae1_train += loss_ae1.item() * weight[0]
-                loss_ae2_train += loss_ae2.item() * weight[1]
-                loss_dyn_train += loss_dyn.item() * weight[2]
+                loss_ae1_train += loss_ae1.item()
+                loss_ae2_train += loss_ae2.item()
+                loss_dyn_train += loss_dyn.item()
                 epoch_train_loss += loss_total.item()
+                loss_contrastive_train += loss_con.item()
 
-            if weight[3] != 0:
-                for i, (pairs, x_final) in enumerate(self.labels_train_loader):
-                    x_final = x_final.to(self.device)
-                    z_final = self.encoder(x_final)
-                    loss_con = self.labels_losses(z_final, pairs, weight[3])
-                    loss_contrastive_train += loss_con.item()
-                    loss_con.backward()
-                    optimizer.step()
+            epoch_train_loss /= num_batches
 
-            epoch_train_loss = (epoch_train_loss/ len(self.dynamics_train_loader)) + (loss_contrastive_train / len(self.labels_train_loader))
-
-            self.train_losses['loss_ae1'].append(loss_ae1_train / len(self.dynamics_train_loader))
-            self.train_losses['loss_ae2'].append(loss_ae2_train / len(self.dynamics_train_loader))
-            self.train_losses['loss_dyn'].append(loss_dyn_train / len(self.dynamics_train_loader))
-            self.train_losses['loss_contrastive'].append(loss_contrastive_train / len(self.labels_train_loader))
+            self.train_losses['loss_ae1'].append(loss_ae1_train / num_batches)
+            self.train_losses['loss_ae2'].append(loss_ae2_train / num_batches)
+            self.train_losses['loss_dyn'].append(loss_dyn_train / num_batches)
+            self.train_losses['loss_contrastive'].append(loss_contrastive_train / num_batches)
             self.train_losses['loss_total'].append(epoch_train_loss)
 
             with torch.no_grad():
@@ -184,36 +184,36 @@ class Training:
                 loss_dyn_test = 0
                 loss_contrastive_test = 0
 
-                if weight_bool[0] or weight_bool[1]:  
+                if weight_bool[0] or weight_bool[1] or weight_bool[2]:  
                     self.encoder.eval() 
                     self.decoder.eval() 
-                if weight_bool[2]: 
+                if weight_bool[1] or weight_bool[2]: 
                     self.dynamics.eval()
 
-                for i, (x_t, x_tau) in enumerate(self.dynamics_test_loader):
+                num_batches = min(len(self.dynamics_test_loader), len(self.labels_test_loader))
+                for (x_t, x_tau), (pairs, x_final) in zip(self.dynamics_test_loader, self.labels_test_loader):
                     # Forward pass
                     forward_pass = self.forward(x_t, x_tau)
                     # Compute losses
                     loss_ae1, loss_ae2, loss_dyn, loss_total = self.dynamics_losses(forward_pass, weight)
 
-                    loss_ae1_test += loss_ae1.item() * weight[0]
-                    loss_ae2_test += loss_ae2.item() * weight[1]
-                    loss_dyn_test += loss_dyn.item() * weight[2]
+                    loss_ae1_test += loss_ae1.item() 
+                    loss_ae2_test += loss_ae2.item() 
+                    loss_dyn_test += loss_dyn.item() 
                     epoch_test_loss += loss_total.item()
 
-                if weight[3] != 0:
-                    for i, (pairs, x_final) in enumerate(self.labels_test_loader):
+                    if weight[3] != 0:
                         x_final = x_final.to(self.device)
                         z_final = self.encoder(x_final)
                         loss_con = self.labels_losses(z_final, pairs, weight[3])
                         loss_contrastive_test += loss_con.item()
 
-                epoch_test_loss = (epoch_test_loss/ len(self.dynamics_test_loader)) + (loss_contrastive_test / len(self.labels_test_loader))
+                epoch_test_loss /= num_batches
 
-                self.test_losses['loss_ae1'].append(loss_ae1_test / len(self.dynamics_test_loader))
-                self.test_losses['loss_ae2'].append(loss_ae2_test / len(self.dynamics_test_loader))
-                self.test_losses['loss_dyn'].append(loss_dyn_test / len(self.dynamics_test_loader))
-                self.test_losses['loss_contrastive'].append(loss_contrastive_test / len(self.labels_test_loader))
+                self.test_losses['loss_ae1'].append(loss_ae1_test / num_batches)
+                self.test_losses['loss_ae2'].append(loss_ae2_test / num_batches)
+                self.test_losses['loss_dyn'].append(loss_dyn_test / num_batches)
+                self.test_losses['loss_contrastive'].append(loss_contrastive_test / num_batches)
                 self.test_losses['loss_total'].append(epoch_test_loss)
 
             scheduler.step(epoch_test_loss)
