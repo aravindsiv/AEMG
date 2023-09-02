@@ -5,9 +5,18 @@ from tqdm import tqdm
 
 def get_exp_ids(num_design):
     exp_ids = [
-        '500x1x1x',
-        '1x100x1x',
-        '1x1x1x',
+        '500x1x1x1x',
+        '1x100x1x1x',
+        '1x1x1x1x',
+        '500x1x1x0.1x',
+        '1x100x1x0.1x',
+        '1x1x1x0.1x',
+        '500x1x1x0.01x',
+        '1x100x1x0.01x',
+        '1x1x1x0.01x',
+        '500x1x1x0x',
+        '1x100x1x0x',
+        '1x1x1x0x',
         '5x1x1x',
         '10x1x1x',
         '50x1x1x',

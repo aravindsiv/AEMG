@@ -11,7 +11,10 @@
     'patience': 100,
     'batch_size': 1024,
     'learning_rate': 0.001,
+    'experiment': '500x1x1x0.1x', 
+    'num_layers': 2, 
     'data_dir': 'data/trifinger/',
     'model_dir': 'models/trifinger/',
     'log_dir': 'logs/trifinger/',
+    'output_dir': 'output/trifinger/',
 }

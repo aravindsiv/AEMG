@@ -6,7 +6,7 @@
     'low_dims': 2,
     'step': 1,
     'subsample': 1,
-    'epochs': 1000,
+    'epochs': 1500,
     'patience': 50,
     'batch_size': 1024,
     'learning_rate': 0.001,
@@ -15,6 +15,6 @@
     'log_dir': 'output/bistable/logs/',
     'num_layers': 1,
     'seed': 0,
-    'experiment': '1x100x1x',
+    'experiment': '1x100x1x0x',
     'output_dir': 'output/bistable/'
 }
