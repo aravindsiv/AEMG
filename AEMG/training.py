@@ -160,6 +160,7 @@ class Training:
                     z_final = self.encoder(x_final)
                     loss_con = self.labels_losses(z_final, pairs, weight[3])
                     loss_total += loss_con
+                    loss_contrastive_train += loss_con.item()
                 # Backward pass
                 loss_total.backward()
                 optimizer.step()
@@ -168,7 +169,6 @@ class Training:
                 loss_ae2_train += loss_ae2.item()
                 loss_dyn_train += loss_dyn.item()
                 epoch_train_loss += loss_total.item()
-                loss_contrastive_train += loss_con.item()
 
             epoch_train_loss /= num_batches
 
