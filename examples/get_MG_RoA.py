@@ -126,12 +126,11 @@ def main(args, config, experiment_name):
         #     # original_space_sample = np.array([system.transform(i) for i in original_space_sample])
 
     elif args.validation_type == 'random': # random sample (ideal for high dim space)
-        original_space_sample = system.sample_state(2**(sb + 4))
+        original_space_sample = system.sample_state(2**(sb + 2))
         # original_space_sample = np.array([system.transform(system.sample_state()) for i in range(2**(sb+2))])
 
     else: # sample from trajectories (ideal for large trajectory set)
         dataset = DynamicsDataset(config)
-        assert False, "Ewerton, please check the next line and remove this one."
         latent_space_sample = dyn_utils.encode(dataset.Xt.numpy(), normalize=False)
 
     latent_space_sample = dyn_utils.encode(original_space_sample)
@@ -145,7 +144,7 @@ def main(args, config, experiment_name):
 
     phase_periodic = [False, False]
 
-    K = [1.1]*2
+    K = [1.1] * dim_latent_space
     def F(rect):
         return MG_util.BoxMapK_valid(g, rect, K, valid_grid_latent_space, grid.point2cell)
 

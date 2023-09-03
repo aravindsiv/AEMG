@@ -5,7 +5,7 @@
     'high_dims': 9,
     'low_dims': 2,
     'step': 1,
-    'epochs': 1000,
+    'epochs': 1500,
     'patience': 50,
     'batch_size': 1024,
     'learning_rate': 0.001,
@@ -14,5 +14,5 @@
     'log_dir': 'logs/ndpendulum_lqr/',
     'num_layers': 1,
     'seed': 0,
-    'experiment': '1x1x1x',
+    'experiment': '1x1x1x0x',
 }
