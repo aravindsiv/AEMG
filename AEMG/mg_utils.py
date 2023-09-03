@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 
 from AEMG.systems.utils import get_system
-
 from collections import defaultdict
+from AEMG.grid import Grid
 
 import os
 
@@ -36,6 +36,12 @@ class MorseGraphOutputProcessor:
 
         self.morse_nodes = np.unique(self.morse_nodes_data[:, 1])
 
+        self.corner_points = {}
+        for i in range(self.morse_nodes_data.shape[0]):
+            self.corner_points[int(self.morse_nodes_data[i, 0])] = int(self.morse_nodes_data[i, 1])
+        for i in range(self.attractor_nodes_data.shape[0]):
+            self.corner_points[int(self.attractor_nodes_data[i, 0])] = int(self.attractor_nodes_data[i, 1])
+
         if not os.path.exists(mg_att_fname):
             raise FileNotFoundError("Morse Graph attractors file does not exist at: " + config['output_dir'])
         
@@ -60,7 +66,14 @@ class MorseGraphOutputProcessor:
                     b = int(line.split("->")[1].split(";")[0].strip())
                     self.outgoing_edges[a].append(b)
                     self.incoming_edges[b].append(a)
-    
+
+        lower_bounds = [-1.]*self.dims
+        upper_bounds = [1.]*self.dims
+        latent_space_area = np.prod(np.array(upper_bounds) - np.array(lower_bounds))
+        box_area = np.prod(self.box_size)
+        subdivisions = np.log2(latent_space_area/box_area)
+        self.grid = Grid(lower_bounds, upper_bounds, int(subdivisions))
+
     def get_num_attractors(self):
         return self.found_attractors
     
@@ -75,15 +88,5 @@ class MorseGraphOutputProcessor:
     
     def which_morse_node(self, point):
         assert point.shape[0] == self.dims
-        for i in range(self.morse_nodes_data.shape[0]):
-            corner_point_low  = self.morse_nodes_data[i, 2:2+self.dims]
-            corner_point_high = self.morse_nodes_data[i, 2+self.dims:]
-            if np.all(point >= corner_point_low) and np.all(point <= corner_point_high):
-                return int(self.morse_nodes_data[i, 1])
-        for i in range(self.attractor_nodes_data.shape[0]):
-            corner_point_low  = self.attractor_nodes_data[i, 2:2+self.dims]
-            corner_point_high = self.attractor_nodes_data[i, 2+self.dims:]
-            if np.all(point >= corner_point_low) and np.all(point <= corner_point_high):
-                return int(self.attractor_nodes_data[i, 1])
-        return -1
-        
+        found = self.corner_points[self.grid.point2indexCMGDB(point)]
+        return found
