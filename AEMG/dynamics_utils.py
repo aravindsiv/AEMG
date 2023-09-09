@@ -25,7 +25,6 @@ class DynamicsUtils:
         self.dynamics = LatentDynamics(config)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print("Device: ", self.device)
 
         self.encoder = torch.load(os.path.join(config['model_dir'], 'encoder.pt'), map_location=self.device)
         self.decoder = torch.load(os.path.join(config['model_dir'], 'decoder.pt'), map_location=self.device)
