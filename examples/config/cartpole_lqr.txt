@@ -6,11 +6,12 @@
     'low_dims': 2,
     'subsample': 10,
     'step': 1,
-    'epochs': 1000,
+    'epochs': 1500,
     'patience': 100,
     'batch_size': 1024,
     'learning_rate': 0.001,
     'data_dir': 'data/cartpole_lqr/',
     'model_dir': 'models/cartpole_lqr/',
     'log_dir': 'logs/cartpole_lqr/',
+    'labels_fname': 'data/cartpole_lqr1k_success.txt',
 }

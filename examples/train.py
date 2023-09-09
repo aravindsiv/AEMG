@@ -60,28 +60,37 @@ def main():
     torch.manual_seed(config["seed"])
     
     dynamics_dataset = DynamicsDataset(config)
-    labels_dataset = LabelsDataset(config)
+    
     
     np.random.seed(config["seed"])
 
     dynamics_train_size = int(0.8*len(dynamics_dataset))
     dynamics_test_size = len(dynamics_dataset) - dynamics_train_size
-
-    labels_train_size = int(0.8 * len(labels_dataset))
-    labels_test_size = len(labels_dataset) - labels_train_size
-
     dynamics_train_dataset, dynamics_test_dataset = torch.utils.data.random_split(dynamics_dataset, [dynamics_train_size, dynamics_test_size])
     dynamics_train_loader = DataLoader(dynamics_train_dataset, batch_size=config["batch_size"], shuffle=True)
     dynamics_test_loader = DataLoader(dynamics_test_dataset, batch_size=config["batch_size"], shuffle=True)
 
-    labels_train_dataset, labels_test_dataset = torch.utils.data.random_split(labels_dataset, [labels_train_size, labels_test_size])
-    labels_train_loader = DataLoader(labels_train_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
-    labels_test_loader = DataLoader(labels_test_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
+    if "labels_fname" in config.keys(): 
+        labels_dataset = LabelsDataset(config)
+        labels_train_size = int(0.8 * len(labels_dataset))
+        labels_test_size = len(labels_dataset) - labels_train_size
+        labels_train_dataset, labels_test_dataset = torch.utils.data.random_split(labels_dataset, [labels_train_size, labels_test_size])
+        labels_train_loader = DataLoader(labels_train_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
+        labels_test_loader = DataLoader(labels_test_dataset, batch_size=config["batch_size"], shuffle=True, collate_fn=labels_dataset.collate_fn)
+    else:
+        labels_train_loader = dynamics_train_loader
+        labels_test_loader = dynamics_test_loader
+
 
     if args.verbose:
         print("Train size: ", len(dynamics_train_dataset))
         print("Test size: ", len(dynamics_test_dataset))
 
+    # loaders = {
+    #     'train_dynamics': dynamics_train_loader,
+    #     'test_dynamics': dynamics_test_loader
+    # }
+    # if "labels_fname" in config.keys(): 
     loaders = {
         'train_dynamics': dynamics_train_loader,
         'test_dynamics': dynamics_test_loader,
