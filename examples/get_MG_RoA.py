@@ -144,13 +144,14 @@ def main(args, config, experiment_name):
 
     phase_periodic = [False, False]
 
-    K = [1.1] * dim_latent_space
+    K = [1.1 * (1 + args.Lips/100)] * dim_latent_space
+    
     def F(rect):
         return MG_util.BoxMapK_valid(g, rect, K, valid_grid_latent_space, grid.point2cell)
 
 
     # base name for the output files.
-    base_name = f"{config['output_dir']}/{args.name_out}"
+    base_name = f"{config['output_dir']}{args.name_out}"
     
     
     print(base_name)
@@ -178,7 +179,7 @@ if __name__ == "__main__":
     parser.add_argument('--RoA',help='Compute RoA',action='store_true')
     parser.add_argument('--sub',help='Select subdivision',type=int,default=14)
     parser.add_argument('--validation_type',help='Select the type of Validation for the lantent discretization',type=str,default='random')
-
+    parser.add_argument('--Lips',help='increase Lipschitz constant by x%',type=int,default=0)
 
     args = parser.parse_args()
     config_fname = args.config_dir + args.config

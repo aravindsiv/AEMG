@@ -7,6 +7,7 @@ from AEMG.systems.leslie_map import Leslie_map
 from AEMG.systems.humanoid import Humanoid
 from AEMG.systems.trifinger import Trifinger
 from AEMG.systems.bistable_rot import Bistable_Rot
+from AEMG.systems.unifinger import Unifinger
 
 def get_system(name, dims=10, **kwargs):
     if name == "pendulum":
@@ -27,6 +28,8 @@ def get_system(name, dims=10, **kwargs):
         system = Trifinger(**kwargs)
     elif name == "bistable_rot":
         system = Bistable_Rot(**kwargs)
+    elif name == "unifinger":
+        system = Unifinger(**kwargs)
     else:
         print("That system does not exist!")
         raise NotImplementedError

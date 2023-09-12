@@ -100,7 +100,7 @@ def exp_cluster_array(name_sh = "/run/aemg_array.sh"):
     return lines
 
 def generate_shell(args, path_config, dir_counter):
-    save_folder = os.path.join(os.getcwd(),f"tmp_sh_{args.name}")
+    save_folder = os.path.join(os.getcwd(),f"tmp_sh_{args.name}{args.out_extra}")
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
@@ -117,7 +117,7 @@ def generate_shell(args, path_config, dir_counter):
         file.write(halfs_1)
 
 def generate_job_array(args, path_config, dir_counter):
-    save_folder = os.path.join(os.getcwd(),f"tmp_sh_{args.name}")
+    save_folder = os.path.join(os.getcwd(),f"tmp_sh_{args.name}{args.out_extra}")
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--config',help='Base config file inside examples/config/',type=str,default='discrete_map.txt')
-    parser.add_argument('--dir', help='Directory to save generated config files', type=str, default='tmp_config/')
+    parser.add_argument('--dir', help='Directory to save generated config files', type=str, default='tmp_config')
     parser.add_argument('--name', help='Name of the experiment', type=str,required=True)
     parser.add_argument('--max_jobs',help='Split into multiple files',type=int,default=100)
     parser.add_argument('--shell',help='Generate shell script to send job',type=str,default="")
@@ -150,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_size', help='Select data size (accept seq of numbers)', action='store', type=int, nargs='*', default=[1])
     parser.add_argument('--num_design', help='Select the number of designs', type=int, default=3)
     parser.add_argument('--num_steps', help='Select the number of steps', type=int, default=1)
+    parser.add_argument('--out_extra',help='Add extra name to output',type=str,default="")
 
     args = parser.parse_args()
 
@@ -158,6 +159,7 @@ if __name__ == "__main__":
     with open(config_fname) as f:
         config = eval(f.read())
     
+    args.dir = args.dir[0:-1] + args.out_extra + '/'
     if not os.path.exists(args.dir):
         os.makedirs(args.dir)
 
@@ -205,9 +207,9 @@ if __name__ == "__main__":
                         new_config['seed'] = seed
                         new_config['experiment'] = exp
                         new_config['num_layers'] = nl
-                        system_control_data_temp = f"{new_config['system']}_{new_config['control']}{ds}k"
-                        new_config['data_dir'] = f"data/{system_control_data_temp}"
-                        output_temp = f"output/{system_control_data_temp}/{row['id']}/"
+                        new_config['data_dir'] = f"data/{new_config['system']}_{new_config['control']}{ds}k"
+                        system_control_dir_temp = f"{new_config['system']}_{new_config['control']}{ds}k{args.out_extra}"
+                        output_temp = f"output/{system_control_dir_temp}/{row['id']}/"
                         new_config['output_dir'] = output_temp
                         new_config['model_dir'] = f"{output_temp}model/"
                         new_config['log_dir'] = f"{output_temp}logs/"
@@ -219,10 +221,11 @@ if __name__ == "__main__":
                             # if args.shell !="": generate_shell(args, f'{args.dir}{dir_counter}', dir_counter)
                         
                         # save temp config to run experiments
-                        if not os.path.exists(f'{args.dir}{dir_counter}'):
-                            os.makedirs(f'{args.dir}{dir_counter}')
+                        temp_dir_exp = f'{args.dir}{dir_counter}'
+                        if not os.path.exists(temp_dir_exp):
+                            os.makedirs(temp_dir_exp)
                         
-                        with open(f'{args.dir}{dir_counter}/{row["id"]}.txt', 'w') as f:
+                        with open(f'{temp_dir_exp}/{row["id"]}.txt', 'w') as f:
                             f.write(str(new_config))
 
                         # save config for future references
@@ -235,7 +238,7 @@ if __name__ == "__main__":
 
 
     
-    with open(f'output/{system_control_data_temp}/all_exps.txt', 'w') as f:
+    with open(f'output/{system_control_dir_temp}/all_exps.txt', 'w') as f:
         # Write as follows: <id>: <>,...
         for row in all_exps:
             f.write(f'{row["id"]}:')
