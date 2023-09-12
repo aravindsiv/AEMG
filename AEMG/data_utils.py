@@ -44,6 +44,12 @@ class DynamicsDataset(Dataset):
             self.X_min = np.min(np.concatenate((self.Xt, self.Xnext), axis=0), axis=0)
             self.X_max = np.max(np.concatenate((self.Xt, self.Xnext), axis=0), axis=0)
 
+        for i in range(self.X_min.shape[0]):
+            if np.abs(self.X_min[i] - self.X_max[i]) < 1e-6:
+                print("Warning: X_min and X_max are the same for dimension ", i)
+                self.X_min[i] -= 1
+                self.X_max[i] += 1
+        
         self.Xt = (self.Xt - self.X_min) / (self.X_max - self.X_min)
         self.Xnext = (self.Xnext - self.X_min) / (self.X_max - self.X_min)
 

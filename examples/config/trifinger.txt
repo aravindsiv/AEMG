@@ -13,8 +13,9 @@
     'learning_rate': 0.001,
     'experiment': '500x1x1x0.1x', 
     'num_layers': 2, 
-    'data_dir': 'data/trifinger/',
-    'model_dir': 'models/trifinger/',
-    'log_dir': 'logs/trifinger/',
-    'output_dir': 'output/trifinger/',
+    'data_dir': 'data/trifinger_learned/',
+    'model_dir': 'models/trifinger_learned/',
+    'log_dir': 'logs/trifinger_learned/',
+    'output_dir': 'output/trifinger_learned/',
+    'labels_fname': 'data/trifinger_learned_success.txt'
 }

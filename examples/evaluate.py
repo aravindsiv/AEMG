@@ -8,6 +8,7 @@ np.set_printoptions(suppress=True)
 import os
 import warnings
 warnings.filterwarnings("ignore")
+from collections import defaultdict
 from tqdm import tqdm
 from sklearn.metrics import precision_recall_fscore_support
 
@@ -40,7 +41,7 @@ if __name__ == "__main__":
         if k not in precisions:
             precisions[k] = []
             recalls[k] = []
-
+        
         try:
             mg_out_utils = MorseGraphOutputProcessor(config)
         except FileNotFoundError:
@@ -48,20 +49,44 @@ if __name__ == "__main__":
         except ValueError:
             print("ValueError from: ", config_fname)
             continue
+        except IndexError:
+            print("IndexError from: ", config_fname)
+            continue
 
+        if mg_out_utils.get_num_attractors() <= 1: continue
+        
         dynamics = DynamicsUtils(config)
         if trajectories is None:
             print("Assumes all configs in this experiment share the same dataset")
             if args.test_data == "" or args.test_labels == "":
                 trajectories = TrajectoryDataset(config)
                 successful_final_conditions_true = trajectories.get_successful_final_conditions()
+                unsuccessful_final_conditions_true = trajectories.get_unsuccessful_final_conditions()
             else:
                 config["data_dir"] = args.test_data
                 config["labels_dir"] = args.test_labels
                 trajectories = TrajectoryDataset(config)
                 successful_final_conditions_true = trajectories.get_successful_final_conditions()
+                unsuccessful_final_conditions_true = trajectories.get_unsuccessful_final_conditions()
 
         encoded_successful_final_conditions = dynamics.encode(successful_final_conditions_true)
+        encoded_unsuccessful_final_conditions = dynamics.encode(unsuccessful_final_conditions_true)
+
+        '''
+        success_counts = defaultdict(int)  
+        failure_counts = defaultdict(int)
+
+        for i in range(encoded_successful_final_conditions.shape[0]):
+            success_counts[mg_out_utils.which_morse_node(encoded_successful_final_conditions[i])] += 1
+        for i in range(encoded_unsuccessful_final_conditions.shape[0]):
+            failure_counts[mg_out_utils.which_morse_node(encoded_unsuccessful_final_conditions[i])] += 1
+        
+        inside_nodes = set()
+        for key in success_counts.keys():
+            if key != -1 and success_counts[key] > failure_counts[key]:
+                inside_nodes.add(key)
+        '''
+
         inside_nodes = set()
         for i in range(encoded_successful_final_conditions.shape[0]):
             inside_nodes.add(mg_out_utils.which_morse_node(encoded_successful_final_conditions[i]))
