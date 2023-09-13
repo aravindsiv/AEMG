@@ -8,7 +8,7 @@ from AEMG.systems.humanoid import Humanoid
 from AEMG.systems.trifinger import Trifinger
 from AEMG.systems.bistable_rot import Bistable_Rot
 from AEMG.systems.unifinger import Unifinger
-from AEMG.systems.threelinkpendulum import ThreeLinkPendulum
+from AEMG.systems.pendulum3links import Pendulum3links
 
 def get_system(name, dims=10, **kwargs):
     if name == "pendulum":
@@ -31,8 +31,8 @@ def get_system(name, dims=10, **kwargs):
         system = Bistable_Rot(**kwargs)
     elif name == "unifinger":
         system = Unifinger(**kwargs)
-    elif name == "threelink_pendulum":
-        system = ThreeLinkPendulum(**kwargs)
+    elif name == "pendulum3links":
+        system = Pendulum3links(**kwargs)
     else:
         print("That system does not exist!")
         raise NotImplementedError
