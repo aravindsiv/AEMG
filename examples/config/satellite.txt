@@ -1,0 +1,22 @@
+{
+    'system': 'satellite',
+    'control': 'learned',
+    'use_limits': False,
+    'high_dims': 6,
+    'hidden_shape': 64,
+    'low_dims': 2,
+    'subsample': 5,
+    'step': 1,
+    'epochs': 1500,
+    'patience': 100,
+    'batch_size': 1024,
+    'learning_rate': 0.001,
+    'seed': 0, 
+    'experiment': '500x1x1x0.1x', 
+    'num_layers': 2, 
+    'data_dir': 'data/satellite_learned/',
+    'model_dir': 'models/satellite_learned/',
+    'log_dir': 'logs/satellite_learned/',
+    'output_dir': 'output/satellite_learned/',
+    'labels_fname': 'data/satellite_learned_success.txt'
+}
