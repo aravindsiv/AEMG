@@ -162,6 +162,7 @@ class TrajectoryDataset:
                 self.labels_dict[labels[i,0]] = int(labels[i,1])
 
         for f in tqdm(os.listdir(config['data_dir'])):
+            if f == '.DS_Store': continue
             raw_data = np.loadtxt(os.path.join(config['data_dir'], f), delimiter=',')
             if len(raw_data) == 0: continue
             indices = np.arange(raw_data.shape[0])

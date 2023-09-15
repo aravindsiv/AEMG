@@ -30,7 +30,7 @@ if __name__ == "__main__":
     recalls = {}
 
     for dir in tqdm(os.listdir(output_dir)):
-        if dir.endswith('.txt'): continue
+        if dir.endswith('.txt') or dir == '.DS_Store': continue
         config_fname = os.path.join(output_dir, dir, "config.txt")
 
         with open(config_fname) as f:
@@ -48,6 +48,11 @@ if __name__ == "__main__":
         except ValueError:
             print("ValueError from: ", config_fname)
             continue
+        except IndexError:
+            print("IndexError from: ", config_fname)
+            continue
+
+        if mg_out_utils.get_num_attractors() <= 1: continue
 
         dynamics = DynamicsUtils(config)
         if trajectories is None:
@@ -57,7 +62,7 @@ if __name__ == "__main__":
                 successful_final_conditions_true = trajectories.get_successful_final_conditions()
             else:
                 config["data_dir"] = args.test_data
-                config["labels_dir"] = args.test_labels
+                config["labels_fname"] = args.test_labels
                 trajectories = TrajectoryDataset(config)
                 successful_final_conditions_true = trajectories.get_successful_final_conditions()
 
